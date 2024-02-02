@@ -1,28 +1,14 @@
-# API data-repositories
-
-Try to use different API to request different data repositories
-
-targets :
-- zenodo : https://zenodo.org/
-- openNeuro : https://openneuro.org/
-- Nakala : https://nakala.fr/
-- G-node : https://gin.g-node.org/
-- RechercheDataGouv : ?
-- EOSC : ?
+# BIDSIF
 
 
-Sources : 
-- https://gist.github.com/slint
-- https://gist.github.com/slint/d30fc0f415300876facbbeb8a0989ab2
+## Project decription 
+This code aims at bidsifying the EEG data recorded at CRPN.
+The code was developed by S. Moré and A.-S Dubarry
+
+## Ressource 
 
 
-
-
-# MNE-BIDS
-
-source : https://mne.tools/mne-bids/stable/index.html
-
-MNE BIDS can be used to to create a BIDS-compatible directory of EEG or iEEG data.
+[MNE BIDS](https://mne.tools/mne-bids/stable/index.html) is used to create a BIDS-compatible directory of EEG or iEEG data.
 MNE can load different data format :
 
     BrainVision (.vhdr, .vmrk, .eeg)
@@ -43,13 +29,19 @@ see here for more details : see here https://mne.tools/stable/auto_tutorials/io/
 
 
 
-Becareful !  
-MNE-BIDS create good file organization, and create metadatafiles required for BIDS-validator, but some metadata are very poor and incomplete : just what's needed to validate. 
+**Warning! **  
+MNE-BIDS create good file organization, and create metadatafiles required for [BIDS-validator](https://bids-standard.github.io/bids-validator/), but some metadata are very poor and incomplete : just what's needed to validate. 
 THat's why it generate warnings from BIDS-validator.
 
 A dataset generated with BIDS-MNE without metadata completed by humans can't be reused( critical informations will be missing).  
 
-Humans need to complete 
+
+# What's next? 
+
+
+In the current state of the project humans need to complete 
 -description.json file (taskname, task description, manufacturer, software (version),powerline frequency,eegground,eeg reference)  
 -participants.json and participants.tsv  
 -readme
+
+A solution needs to be defined to collect meteadata (eLabW? standalone tool?)
