@@ -47,4 +47,4 @@ In the current state of the project humans need to complete
 -participants.json and participants.tsv  
 -readme
 
-A solution needs to be defined to collect meteadata (eLabW? standalone tool?)
+A solution needs to be defined to collect meteadata (standalone tool)
