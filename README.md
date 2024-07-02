@@ -7,6 +7,8 @@ The code was developed by S. Moré and A.-S Dubarry
 
 ## Ressource 
 
+Documentation sur BIDS EEG : https://bids-specification.readthedocs.io/en/stable/modality-specific-files/electroencephalography.html
+
 
 [MNE BIDS](https://mne.tools/mne-bids/stable/index.html) is used to create a BIDS-compatible directory of EEG or iEEG data.
 MNE can load different data format :
@@ -40,6 +42,7 @@ A dataset generated with BIDS-MNE without metadata completed by humans can't be 
 
 
 In the current state of the project humans need to complete 
+
 -description.json file (taskname, task description, manufacturer, software (version),powerline frequency,eegground,eeg reference)  
 -participants.json and participants.tsv  
 -readme
