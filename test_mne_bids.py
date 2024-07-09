@@ -3,7 +3,7 @@
 """
 Created on Thu Feb 10 13:35:52 2022
 
-@author: Simon More, A.-Sophie Dubarry
+@author: Simon More, A.-Sophie Dubarry, A. Weill
 """
 
 import os
