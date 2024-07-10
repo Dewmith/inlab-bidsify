@@ -11,7 +11,7 @@ This code allows creating a BIDS file from multiple BDF files.
 import mne
 from mne_bids import BIDSPath, write_raw_bids
 import os
-import sys 
+from datetime import datetime
 
 # le user directory
 user_dir = os.path.expanduser('~')
@@ -41,6 +41,8 @@ for subject_folder in os.listdir(input_path):
 
         num_file = 0
 
+        scan_tsv_content = []
+
         for run_index, bdf_file in enumerate(bdf_files, start=1):
 
             # récupérer le nom du sujet, la session et le run
@@ -50,9 +52,8 @@ for subject_folder in os.listdir(input_path):
             
             # Division de la chaîne en utilisant le séparateur "-"
             # Attribution des parties aux variables
-            sub, session, _ = bdf_file_without_ext.split("-")
+            sub, session, run_desc = bdf_file_without_ext.split("-")
 
-            session = 'ses-' + session
             run = str(run_index)
 
             # est-ce que c'est le bon sujet ?
@@ -67,3 +68,22 @@ for subject_folder in os.listdir(input_path):
             write_raw_bids(raw_list[num_file], bids_path=bids_path, allow_preload=True, format='BDF')
 
             num_file = num_file + 1
+
+            acq_time = datetime.now().isoformat()
+            scan_tsv_content.append(f"eeg/sub-{subject}_ses-{session}_task-{task}_run-{run}_eeg.bdf\t{acq_time}")
+                    
+            # Créer le fichier JSON pour le run
+            json_path = bids_path.copy().update(extension='.json')
+            json_content = {
+                "TaskName": task,
+                "RunNumber": run_index,
+                "RunDescription": f'session: {session} condition, run: nb. {run_index} desc "{run_desc}"'
+            }
+            with open(json_path, 'w') as f:
+                json.dump(json_content, f, indent=4)
+                
+        # Créer le fichier scans.tsv
+        scans_tsv_path = os.path.join(bids_path.directory, f"sub-{subject}_ses-{session}_scans.tsv")
+        with open(scans_tsv_path, 'w') as f:
+            f.write("filename\tacq_time\n")
+            f.write("\n".join(scan_tsv_content))
