@@ -12,6 +12,7 @@ import mne
 from mne_bids import BIDSPath, write_raw_bids
 import os
 from datetime import datetime
+import json
 
 # le user directory
 user_dir = os.path.expanduser('~')
@@ -35,8 +36,9 @@ for subject_folder in os.listdir(input_path):
 
         # Lire et concaténer les fichiers BDF pour chaque sujet
         # (ne pas prendre les fichiers systèmes commençant par un point venant du Mac)
+        # preload='False': pas besoin de précharger, car on ne concatène pas les données
         bdf_files = [os.path.join(subject_path, f) for f in os.listdir(subject_path) if f.endswith('.bdf') and not(f.startswith('.'))]
-        raw_list = [mne.io.read_raw_bdf(bdf_file, preload=True) for bdf_file in bdf_files]
+        raw_list = [mne.io.read_raw_bdf(bdf_file, preload=False) for bdf_file in bdf_files]
         # raw_combined = mne.concatenate_raws(raw_list)
 
         num_file = 0
@@ -65,7 +67,10 @@ for subject_folder in os.listdir(input_path):
                                  datatype='eeg', task=task, root=out_path)
         
             # Écrire les données combinées en format BIDS
-            write_raw_bids(raw_list[num_file], bids_path=bids_path, allow_preload=True, format='BDF')
+            # Utiliser format='EDF' pour spécifier explicitement le format de sortie
+            # ('EDF' utilisé pour les données préchargées)
+            # sinon 'auto' pour garder le même format
+            write_raw_bids(raw_list[num_file], bids_path=bids_path, allow_preload=False, format='auto', overwrite=False)
 
             num_file = num_file + 1
 
@@ -77,13 +82,8 @@ for subject_folder in os.listdir(input_path):
             json_content = {
                 "TaskName": task,
                 "RunNumber": run_index,
-                "RunDescription": f'session: {session} condition, run: nb. {run_index} desc "{run_desc}"'
+                "RunDescription": f"session: {session} condition, run: nb. {run_index} desc '{run_desc}'"
             }
             with open(json_path, 'w') as f:
                 json.dump(json_content, f, indent=4)
                 
-        # Créer le fichier scans.tsv
-        scans_tsv_path = os.path.join(bids_path.directory, f"sub-{subject}_ses-{session}_scans.tsv")
-        with open(scans_tsv_path, 'w') as f:
-            f.write("filename\tacq_time\n")
-            f.write("\n".join(scan_tsv_content))
