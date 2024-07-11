@@ -78,6 +78,9 @@ for subject_folder in os.listdir(input_path):
             scan_tsv_content.append(f"eeg/sub-{subject}_ses-{session}_task-{task}_run-{run}_eeg.bdf\t{acq_time}")
                     
             # Créer le fichier JSON pour le run
+            # A améliorer (voir issue #2)
+            # En l'état le BIDS n'est pas conforme
+            '''
             json_path = bids_path.copy().update(extension='.json')
             json_content = {
                 "TaskName": task,
@@ -86,4 +89,4 @@ for subject_folder in os.listdir(input_path):
             }
             with open(json_path, 'w') as f:
                 json.dump(json_content, f, indent=4)
-                
+            ''' 
