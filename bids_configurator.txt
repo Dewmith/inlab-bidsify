@@ -1,0 +1,14 @@
+# This file is the configuration file for this project
+# Created on Thursday, July 11, 2024
+
+# Input and Output Directories
+input_path = "/home/arnaud/Documents/Python-Scripts/BIDSIF/Entree_Q1"
+out_path = "/home/arnaud/Documents/Python-Scripts/BIDSIF/Sortie_Q1"
+
+# General Information to be Added Manually
+task = 'nback'
+manufacturer = "Biosemi"
+manufacturers_model_name = "ActiveTwo"
+eeg_reference = "Cz"
+eeg_ground = "Fpz"
+power_line_frequency = 50
