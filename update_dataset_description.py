@@ -17,29 +17,25 @@ FOR THE USE OF THIS SOFTWARE.
 =============================================================================
 Authors: Arnaud Weill, Anne-Sophie Dubarry, Jean-Luc Blanc
 
-Created on Tue July 11th 2024
+Created on Tue July 12th 2024
 
-This code allows creating a BIDS file from multiple BDF files.
+This function update name and authors in the JSON description dataset.
 """
 
 import os
-from manage_bdf import manage_bdf
-from update_dataset_description import update_dataset_description
+import json
 
-def manage_subject(subject_path, subject_folder, config):
-
-    # le sujet est le nom du dossier
-    subject = subject_folder.lower()
-
-    # Enumérer la liste des BDF
-    bdf_files = [os.path.join(subject_path, f) for f in os.listdir(subject_path) if f.endswith('.bdf') and not(f.startswith('.'))]
+def update_dataset_description(config):
+    dataset_description_path = os.path.join(config['out_path'], "dataset_description.json")
     
-    for run_index, bdf_file in enumerate(bdf_files, start=1):
-
-        # Modifier le BIDS à partir du BDF
-        manage_bdf(subject, run_index, bdf_file, config)
-
-    # Ajouter les auteurs une fois le dossier BIDS créé
-    # pour que le fichier "dataset_description.json" soit créé
-    # donc après les appels à manage_bdf()
-    update_dataset_description(config)
+    if not os.path.exists(dataset_description_path):
+        raise ValueError(f"Le fichier {dataset_description_path} n'existe pas.")
+    
+    with open(dataset_description_path, 'r') as f:
+        dataset_description = json.load(f)
+    
+    dataset_description['Authors'] = config['Authors'].split(', ')
+    dataset_description['Name'] = config['Name']
+    
+    with open(dataset_description_path, 'w') as f:
+        json.dump(dataset_description, f, indent=4)

@@ -1,14 +1,52 @@
+# =============================================================================
+# This function is part of the BIDSIF project
+#  
+# This software is distributed under the terms of the GNU General Public License
+# as published by the Free Software Foundation. Further details on the GPLv3
+# license can be found at http://www.gnu.org/copyleft/gpl.html.
+#  
+# FOR RESEARCH PURPOSES ONLY. THE SOFTWARE IS PROVIDED "AS IS," AND IN THE
+# HOPE THAT IT WILL BE USEFUL BUT WITHOUT ANY WARRANTY, EXPRESS OR IMPLIED,
+# INCLUDING BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY AND FITNESS FOR 
+# A PARTICULAR PURPOSE, NOR DO THEY ASSUME ANY LIABILITY OR RESPONSIBILITY
+# FOR THE USE OF THIS SOFTWARE.
+# 
+# =============================================================================
+# Authors: Arnaud Weill, Anne-Sophie Dubarry, Jean-Luc Blanc
+#
 # This file is the configuration file for this project
+#
 # Created on Thursday, July 11, 2024
+
+# Operational Information
+# ***********************
 
 # Input and Output Directories
 input_path = "/home/arnaud/Documents/Python-Scripts/BIDSIF/Entree_Q1"
 out_path = "/home/arnaud/Documents/Python-Scripts/BIDSIF/Sortie_Q1"
 
 # General Information to be Added Manually
+# ****************************************
+
+# Information on the BIDS Description (in "dataset_information.json")
+Name = "name of the dataset"
+# Be careful: separate the authors clearly with ", "
+Authors = "Author One, Author Two, Author Three"
+
+# Information Regarding the BDF Files
+
+# Institutional Information
+InstitutionName = "CRPN - UMR 7077"
+InstitutionAddress = "Aix-Marseille University / CNRS, CRPN - UMR 7077, Service Informatique, 3 Place Victor Hugo, 13331 Marseille cedex 3, France"
+
 task = 'nback'
 manufacturer = "Biosemi"
 manufacturers_model_name = "ActiveTwo"
 eeg_reference = "Cz"
 eeg_ground = "Fpz"
+EEGPlacementScheme = "10-20"
 power_line_frequency = 50
+SoftwareFilters = "n/a"
+SamplingFrequency = 512
+RecordingType = "continuous"
+SubjectArtefactDescription = "n/a"

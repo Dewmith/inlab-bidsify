@@ -1,11 +1,25 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
+=============================================================================
+This function is part of the BIDSIF project
+ 
+This software is distributed under the terms of the GNU General Public License
+as published by the Free Software Foundation. Further details on the GPLv3
+license can be found at http://www.gnu.org/copyleft/gpl.html.
+
+FOR RESEARCH PURPOSES ONLY. THE SOFTWARE IS PROVIDED "AS IS," AND IN THE
+HOPE THAT IT WILL BE USEFUL BUT WITHOUT ANY WARRANTY, EXPRESS OR IMPLIED,
+INCLUDING BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY AND FITNESS FOR 
+A PARTICULAR PURPOSE, NOR DO THEY ASSUME ANY LIABILITY OR RESPONSIBILITY
+FOR THE USE OF THIS SOFTWARE.
+
+=============================================================================
+Authors: Arnaud Weill, Anne-Sophie Dubarry, Jean-Luc Blanc
+
 Created on Tue July 9th 2024
 
 This code adds the custom metadata to the JSON of the run.
-
-@author: A. Weill
 """
 
 import os
@@ -20,39 +34,27 @@ def add_custom_metadata(bids_path, run_index, run_desc, session, config):
         json_content = json.load(f)
     
     # Ajouter les informations manuelles
+    # Pour que ça passe le BIDS Validator, 
+    # j'utilise le champs autorisé "TaskDescription"
+    # https://bids-specification.readthedocs.io/en/v1.3.0/04-modality-specific-files/03-electroencephalography.html
     json_content.update({
+        "TaskDescription": f"{session} condition, run n. {run_index} - desc. '{run_desc}'",
         "TaskName": config['task'],
-        "InstitutionName": "CRPN - UMR 7077",
-        "InstitutionAddress": "Aix-Marseille University / CNRS, CRPN - UMR 7077, Service Informatique, 3 Place Victor Hugo, 13331 Marseille cedex 3, France",
+        "InstitutionName": config['InstitutionName'],
+        "InstitutionAddress": config['InstitutionAddress'],
         "Manufacturer": config['manufacturer'],
         "ManufacturersModelName": config['manufacturers_model_name'],
         "EEGReference": config['eeg_reference'],
         "EEGGround": config['eeg_ground'],
+        "EEGPlacementScheme": config['EEGPlacementScheme'],
         "PowerLineFrequency": config['power_line_frequency'],
-        "SoftwareFilters": "n/a"
+        "SoftwareFilters": config['SoftwareFilters'],
+        "SamplingFrequency": config['SamplingFrequency'],
+        "RecordingType": config['RecordingType'],
+        "SubjectArtefactDescription": config['SubjectArtefactDescription']        
     })
 
     with open(json_path, 'w') as f:
         json.dump(json_content, f, indent=4)
 
-    '''
-    # Modifier le nom du fichier des informations non conformes
-    json_run_path = os.path.join(os.path.dirname(json_path), f'run_description {session} condition, n. {run_index} - {run_desc}.json')
     
-    # si le fichier existe, le charger
-    if os.path.exists(json_run_path):
-
-        with open(json_run_path, 'r') as f:
-            json_run_content_2 = json.load(f)
-    else:
-        # sinon il commence vide
-        json_run_content_2 = {}
-
-    json_run_content_2.update({
-        "RunNumber": run_index,
-        "RunDescription": f'{session} condition, run n. {run_index} - "{run_desc}"'
-    })
-
-    with open(json_run_path, 'w') as f:
-        json.dump(json_run_content_2, f, indent=4)
-    '''
