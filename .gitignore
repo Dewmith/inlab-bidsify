@@ -32,3 +32,7 @@ Sortie*
 **/.DS_Store
 .DS_Store
 *.asv
+
+# le fichier de configuration
+bids_configurator.txt
+
