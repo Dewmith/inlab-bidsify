@@ -37,20 +37,21 @@ def add_custom_metadata(bids_path, run_index, run_desc, session, config):
     # Pour que ça passe le BIDS Validator, 
     # j'utilise le champs autorisé "TaskDescription"
     # https://bids-specification.readthedocs.io/en/v1.3.0/04-modality-specific-files/03-electroencephalography.html
+    # Ceux en commentaire sont automatiquement ajoutés par BIDS-MNE.
     json_content.update({
         "TaskDescription": f"{session} condition, run n. {run_index} - desc. '{run_desc}'",
         "TaskName": config['task'],
         "InstitutionName": config['InstitutionName'],
         "InstitutionAddress": config['InstitutionAddress'],
-        "Manufacturer": config['manufacturer'],
+        # "Manufacturer": config['manufacturer'],
         "ManufacturersModelName": config['manufacturers_model_name'],
-        "EEGReference": config['eeg_reference'],
-        "EEGGround": config['eeg_ground'],
-        "EEGPlacementScheme": config['EEGPlacementScheme'],
-        "PowerLineFrequency": config['power_line_frequency'],
-        "SoftwareFilters": config['SoftwareFilters'],
-        "SamplingFrequency": config['SamplingFrequency'],
-        "RecordingType": config['RecordingType'],
+        # "EEGReference": config['eeg_reference'],
+        # "EEGGround": config['eeg_ground'],
+        # "EEGPlacementScheme": config['EEGPlacementScheme'],
+        # "PowerLineFrequency": config['power_line_frequency'],
+        # "SoftwareFilters": config['SoftwareFilters'],
+        # "SamplingFrequency": config['SamplingFrequency'],
+        # "RecordingType": config['RecordingType'],
         "SubjectArtefactDescription": config['SubjectArtefactDescription']        
     })
 

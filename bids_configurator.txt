@@ -39,14 +39,21 @@ Authors = "Author One, Author Two, Author Three"
 InstitutionName = "CRPN - UMR 7077"
 InstitutionAddress = "Aix-Marseille University / CNRS, CRPN - UMR 7077, Service Informatique, 3 Place Victor Hugo, 13331 Marseille cedex 3, France"
 
+# Run Description
+
+# Necessary, not by default in the ".json"
 task = 'nback'
-manufacturer = "Biosemi"
+
+# manufacturer = "Biosemi"
+
 manufacturers_model_name = "ActiveTwo"
-eeg_reference = "Cz"
-eeg_ground = "Fpz"
-EEGPlacementScheme = "10-20"
-power_line_frequency = 50
-SoftwareFilters = "n/a"
-SamplingFrequency = 512
-RecordingType = "continuous"
+
+# eeg_reference = "Cz"
+# eeg_ground = "Fpz"
+# EEGPlacementScheme = "10-20"
+# power_line_frequency = 50
+# SoftwareFilters = "n/a"
+# SamplingFrequency = 512
+# RecordingType = "continuous"
+
 SubjectArtefactDescription = "n/a"
