@@ -15,7 +15,7 @@ A PARTICULAR PURPOSE, NOR DO THEY ASSUME ANY LIABILITY OR RESPONSIBILITY
 FOR THE USE OF THIS SOFTWARE.
 
 =============================================================================
-Authors: Arnaud Weill, Anne-Sophie Dubarry, Jean-Luc Blanc
+Authors: Arnaud Weill, Anne-Sophie Dubarry
 
 Created on Tue July 9th 2024
 

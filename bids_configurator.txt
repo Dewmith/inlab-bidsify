@@ -12,7 +12,7 @@
 # FOR THE USE OF THIS SOFTWARE.
 # 
 # =============================================================================
-# Authors: Arnaud Weill, Anne-Sophie Dubarry, Jean-Luc Blanc
+# Authors: Arnaud Weill, Anne-Sophie Dubarry
 #
 # This file is the configuration file for this project
 #
