@@ -57,7 +57,6 @@ Under Linux, in the project folder:
   *WARNING: paths must not be relative!*
   Other information can be modified in this file.
 
-
 To execute the code:`python3 create_bids_fron_n_bdf.py`
 
 For Windows and Mac, the procedure should be roughly similar.
