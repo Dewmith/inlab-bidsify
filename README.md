@@ -3,7 +3,7 @@
 ## Project decription
 
 This code aims at bidsifying the EEG data recorded at CRPN.
-The code was developed by S. Moré and A.-S Dubarry
+The code was developed by A. Weill and A.-S Dubarry
 
 ## Ressource
 
@@ -33,15 +33,14 @@ THat's why it generate warnings from BIDS-validator.
 
 A dataset generated with BIDS-MNE without metadata completed by humans can't be reused( critical informations will be missing).
 
+# What has been done
+
+The code to convert multiple BDF files into a single BIDS folder has been completed.
+The code was written in Python and modularized.
+
 # What's next?
 
-In the current state of the project humans need to complete
-
--description.json file (taskname, task description, manufacturer, software (version),powerline frequency,eegground,eeg reference)
--participants.json and participants.tsv
--readme
-
-A solution needs to be defined to collect meteadata (standalone tool)
+To be completed...
 
 # How to install et execute
 
@@ -56,6 +55,8 @@ Under Linux, in the project folder:
   `pip install mne pip install mne_bids`
 - Modify the “bids_configurator.txt” file for the “input_path” (subNN folder containing .bdf files) and “out_path” (bids folder) variables.
   *WARNING: paths must not be relative!*
+  Other information can be modified in this file.
+
 
 To execute the code:`python3 create_bids_fron_n_bdf.py`
 
