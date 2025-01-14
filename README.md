@@ -57,6 +57,24 @@ Under Linux, in the project folder:
   *WARNING: paths must not be relative!*
   Other information can be modified in this file.
 
+  Here’s how to proceed:
+
+  * First, place the folders of the different subjects**"sub01"** ,**"sub02"** , etc., in the input folder, for example, your folder`/home/$USER/Documents/GITLAB/data_bidsif/Entree_Q1`
+
+  - ![](assets/20250114_105030_Dossier_entree_1.png)
+  - In each subject folder **"subNN"** , the **associated BDF files** must be present.
+  - ![](assets/20250114_105315_Dossier_entree_2.png)
+  - In your working directory, for example, `/home/$USER/Documents/GITLAB/data_bidsif`, create the output folder, for instance, **"Sortie_Q1"** , which must be empty. If a BIDS folder has already been created, rerunning the script will update it.
+  - ![](assets/20250114_110016_Dossier_sortie.png)
+  - In the file **"bids_configurator.txt"** , modify the parameters as follows, for example:
+
+    ```
+    input_path = "/home/arnaud/Documents/Python-Scripts/BIDSIF/Entree_Q1"
+    out_path = "/home/arnaud/Documents/Python-Scripts/BIDSIF/Sortie_Q1"
+    ```
+
+    Other parameters in the file must be filled in. You only need to provide the necessary information—nothing complicated.
+
 To execute the code:`python3 create_bids_fron_n_bdf.py`
 
 For Windows and Mac, the procedure should be roughly similar.
