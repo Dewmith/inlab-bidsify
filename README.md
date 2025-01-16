@@ -55,11 +55,11 @@ Under Linux, in the project folder:
 
   * First, place the folders of the different subjects**"sub01"** ,**"sub02"** , etc., in the input folder, for example, your folder`/home/$USER/Documents/GITLAB/data_bidsif/Entree_Q1`
 
-  - ![](assets/20250114_105030_Dossier_entree_1.png)
+  - ![](assets/20250114_105030_Dossier_entree_1.jpg)
   - In each subject folder **"subNN"** , the **associated BDF files** must be present.
-  - ![](assets/20250114_105315_Dossier_entree_2.png)
+  - ![](assets/20250114_105315_Dossier_entree_2.jpg)
   - In your working directory, for example, `/home/$USER/Documents/GITLAB/data_bidsif`, create the output folder, for instance, **"Sortie_Q1"** , which must be empty. If a BIDS folder has already been created, rerunning the script will update it.
-  - ![](assets/20250114_110016_Dossier_sortie.png)
+  - ![](assets/20250114_110016_Dossier_sortie.jpg)
   - In the file **"bids_configurator.txt"** , modify the parameters as follows, for example:
 
     ```
