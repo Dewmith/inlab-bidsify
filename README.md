@@ -5,6 +5,9 @@
 This code aims at bidsifying the EEG data recorded at CRPN.
 The code was developed by A. Weill and A.-S Dubarry
 
+The code to convert multiple BDF files into a single BIDS folder has been completed.
+The code was written in Python and modularized.
+
 ## Ressource
 
 Documentation sur BIDS EEG : https://bids-specification.readthedocs.io/en/stable/modality-specific-files/electroencephalography.html
@@ -32,15 +35,6 @@ MNE-BIDS create good file organization, and create metadatafiles required for [B
 THat's why it generate warnings from BIDS-validator.
 
 A dataset generated with BIDS-MNE without metadata completed by humans can't be reused( critical informations will be missing).
-
-# What has been done
-
-The code to convert multiple BDF files into a single BIDS folder has been completed.
-The code was written in Python and modularized.
-
-# What's next?
-
-To be completed...
 
 # How to install et execute
 
