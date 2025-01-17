@@ -22,8 +22,8 @@
 # ***********************
 
 # Input and Output Directories
-input_path = "/home/arnaud/Documents/Python-Scripts/BIDSIF/Entree_Q1"
-out_path = "/home/arnaud/Documents/Python-Scripts/BIDSIF/Sortie_Q1"
+input_path = "/home/arnaud/Documents/GITLAB/data_bidsif/Entree_Q1"
+out_path = "/home/arnaud/Documents/GITLAB/data_bidsif/Sortie_Q1"
 
 # General Information to be Added Manually
 # ****************************************
