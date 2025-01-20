@@ -2,6 +2,8 @@
 
 ## Project decription
 
+BIDS is a main format of metadata structuire.
+
 This code aims at bidsifying the EEG data recorded at CRPN.
 The code was developed by A. Weill and A.-S Dubarry
 
@@ -10,7 +12,7 @@ The code was written in Python and modularized.
 
 ## Ressource
 
-Documentation sur BIDS EEG : https://bids-specification.readthedocs.io/en/stable/modality-specific-files/electroencephalography.html
+Documentation on [BIDS EEG](https://https://bids-specification.readthedocs.io/en/stable/modality-specific-files/electroencephalography.html).
 
 [MNE BIDS](https://mne.tools/mne-bids/stable/index.html) is used to create a BIDS-compatible directory of EEG or iEEG data.
 MNE can load different data format :
@@ -34,9 +36,9 @@ see here for more details : see here https://mne.tools/stable/auto_tutorials/io/
 MNE-BIDS create good file organization, and create metadatafiles required for [BIDS-validator](https://bids-standard.github.io/bids-validator/), but some metadata are very poor and incomplete : just what's needed to validate.
 THat's why it generate warnings from BIDS-validator.
 
-A dataset generated with BIDS-MNE without metadata completed by humans can't be reused( critical informations will be missing).
+A dataset generated with BIDS-MNE without metadata completed by humans can't be reused (critical informations will be missing).
 
-# How to install et execute
+# How to install and execute
 
 Under Linux, in the project folder:
 
