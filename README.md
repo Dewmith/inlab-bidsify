@@ -49,7 +49,8 @@ Under Linux, in the project folder:
 - Create the python virtual environnement and activate it:`python3 -m venv .penv3.12` (for Python version 3.12)
   then `source .penv3.12/bin/activate`
 - Once the virtual environment has been activated, install mne:
-  `pip install mne  pip install mne_bids`
+  `pip install mne`
+  `pip install mne_bids`
 
 Under Windows, in the project folder
 
@@ -57,7 +58,8 @@ Under Windows, in the project folder
 * Create the python virtual environnement and activate it:`python3 -m venv .penv3.12` (for Python version 3.12)
   then `source .penv3.12/bin/activate`
 * Once the virtual environment has been activated, install mne:
-  `pip install mne    pip install mne_bids`
+  `pip install mne`
+  `pip install mne_bids`
 
 For both systems
 
@@ -89,8 +91,4 @@ Here’s how to proceed:
   `out_path = "C:\Users\your_username\Documents\GITLAB\BIDSIF\Sortie_Q1"`
 - Other parameters in the file must be filled in. You only need to provide the necessary information—nothing complicated.
 
-To execute the code:`python3 create_bids_fron_n_bdf.py`
-
-## TODO
-
-README for Mac OS
+To execute the code: `python create_bids_fron_n_bdf.py` ou `python3 create_bids_fron_n_bdf.py`

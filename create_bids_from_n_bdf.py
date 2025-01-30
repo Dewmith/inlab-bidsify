@@ -22,6 +22,10 @@ Created on Tue July 9th 2024
 This code allows creating a BIDS file from multiple BDF files.
 """
 
+# import sys
+# print(f"Python utilisé dans {__file__}: {sys.executable}")
+# print(f"Chemins de recherche : {sys.path}")
+    
 import os
 from read_config import read_config
 from manage_subject import manage_subject

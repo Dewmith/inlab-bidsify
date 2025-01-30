@@ -22,6 +22,10 @@ Created on Tue July 11th 2024
 This code allows modifying a BIDS directory from a BDF file.
 """
 
+import sys
+print(f"Python utilisé dans {__file__}: {sys.executable}")
+print(f"Chemins de recherche : {sys.path}")
+
 import os
 import mne
 from mne_bids import BIDSPath, write_raw_bids
