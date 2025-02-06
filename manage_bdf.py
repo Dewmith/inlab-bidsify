@@ -44,6 +44,10 @@ def manage_bdf(subject, run_index, bdf_file, config):
     if sub.lower() != subject:
         raise ValueError('le nom du sujet du fichier "' + bdf_file + '" ne correspond pas au dossier "' + subject + '" !')
 
+    # Suppression du préfixe 'sub' si présent
+    if subject.startswith('sub'):
+        subject = subject[3:]
+
     # lire les données brutes du BDF
     # ne pas charger les données en mémoire (ce n'est pas nécessaire car on ne les traite pas)
     raw = mne.io.read_raw_bdf(bdf_file, preload=False)
