@@ -2,8 +2,6 @@
 
 ## Project decription
 
-BIDS is a main format of metadata structure.
-
 This code aims at bidsifying the EEG data recorded at CRPN.
 The code was developed by A. Weill and A.-S Dubarry
 
