@@ -48,18 +48,39 @@ Under Linux, in the project folder:
   sudo apt install python3-venv` `
 - Create the python virtual environnement and activate it:`python3 -m venv .penv3.12` (for Python version 3.12)
   then `source .penv3.12/bin/activate`
+- Upgrade pip: `python3 -m ensurepip --upgrade`
 - Once the virtual environment has been activated, install mne:
   `pip install mne`
   `pip install mne_bids`
+  Or to have the same environment (same version) each time:
+  `pip install -r requirements_Ubuntu_v3.12.txt`
 
 Under Windows, in the project folder
 
-* Install Python 3.12 in user mode, not “for all users”. Remember to check “pip” and "py" so that it's already installed. The default installation options should be correct.
+* Install Python 3.12 in user mode, not “for all users”. Remember to check “pip” and "py" so that it's already installed. The default installation options should be correct. (Do not use "py" in virtual environment !)
 * Create the python virtual environnement and activate it:`python3 -m venv .penv3.12` (for Python version 3.12)
   then `source .penv3.12/bin/activate`
+* Upgrade pip: `python3 -m ensurepip --upgrade`
 * Once the virtual environment has been activated, install mne:
   `pip install mne`
   `pip install mne_bids`
+  Or to have the same environment (same versions) each time:
+  `pip install -r requirements_Windows_v3.12.txt`
+
+Under Mac OS, in the project folder:
+
+* To install python, [go here](https://www.python.org/downloads/release/python-3128/).
+* Create the python virtual environnement and activate it:`python3 -m venv .penv3.12` (for Python version 3.12)
+  then `source .penv3.12/bin/activate`
+* Upgrade pip: `pip install --upgrade pip`
+* Once the virtual environment has been activated, install mne:
+  `pip install mne`
+  `pip install mne_bids`
+* Once the virtual environment has been activated, install mne:
+  `pip install mne`
+  `pip install mne_bids`
+  Or to have the same environment (same version) each time:
+  `pip install -r requirements_MacOS_v3.12.txt`
 
 For both systems
 
@@ -79,16 +100,18 @@ Here’s how to proceed:
 -
 -
 - In the file **"bids_configurator.txt"** , modify the parameters as follows, for example:
-  Linux:
 
-  ```
-  input_path = "/home/your_username/Documents/GITLAB/BIDSIF/Entree_Q1"
-  out_path = "/home/your_username/Documents/GITLAB/BIDSIF/Sortie_Q1"
-  ```
+  Linux:
+  `input_path = "/home/your_username/Documents/GITLAB/data_bidsif/Entree_Q1"`
+  `out_path = "/home/your_username/Documents/GITLAB/data£_bidsif/Sortie_Q1"`
 
   Windows:
-  `input_path = "C:\Users\your_username\Documents\GITLAB\BIDSIF\Entree_Q1"`
-  `out_path = "C:\Users\your_username\Documents\GITLAB\BIDSIF\Sortie_Q1"`
+  `input_path = "C:\Users\your_username\Documents\GITLAB\data_bidsif\Entree_Q1"`
+  `out_path = "C:\Users\your_username\Documents\GITLAB\data_bidsif\Sortie_Q1"`
+
+  Mac OS:
+  `input_path = "/Users/your_username/Documents/GITLAB/data_bidsif/Entree_Q1"`
+  `out_path = "/Users/your_username/Documents/GITLAB/data_bidsif/Sortie_Q1"`
 - Other parameters in the file must be filled in. You only need to provide the necessary information—nothing complicated.
 
 To execute the code: `python create_bids_fron_n_bdf.py` ou `python3 create_bids_fron_n_bdf.py`

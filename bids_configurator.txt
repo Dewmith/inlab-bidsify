@@ -22,14 +22,19 @@
 # ***********************
 
 # Input and Output Directories
+# (Comment out unnecessary lines)
 
 # Linux
 # input_path = "/home/arnaud/Documents/GITLAB/data_bidsif/Entree_Q1"
 # out_path = "/home/arnaud/Documents/GITLAB/data_bidsif/Sortie_Q1"
 
 # Windows
-input_path = "C:/Users/weill/Documents/GITLAB/data_bidsif/Entree_Q1"
-out_path = "C:/Users/weill/Documents/GITLAB/data_bidsif/Sortie_Q1"
+# input_path = "C:/Users/weill/Documents/GITLAB/data_bidsif/Entree_Q1"
+# out_path = "C:/Users/weill/Documents/GITLAB/data_bidsif/Sortie_Q1"
+
+# Mac OS
+input_path = "/Users/arnaudweill/Documents/GITLAB/data_bidsif/Entree_Q1"
+out_path = "/Users/arnaudweill/Documents/GITLAB/data_bidsif/Sortie_Q1"
 
 # General Information to be Added Manually
 # ****************************************

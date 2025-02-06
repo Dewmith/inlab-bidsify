@@ -22,10 +22,6 @@ Created on Tue July 11th 2024
 This code allows creating a BIDS file from multiple BDF files.
 """
 
-import sys
-print(f"Python utilisé dans {__file__}: {sys.executable}")
-print(f"Chemins de recherche : {sys.path}")
-
 import os
 from manage_bdf import manage_bdf
 from update_dataset_description import update_dataset_description
