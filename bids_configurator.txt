@@ -25,24 +25,17 @@
 # (Comment out unnecessary lines)
 
 # Linux
-# input_path = "/home/arnaud/Documents/GITLAB/data_bidsif/Entree_Q1"
-# out_path = "/home/arnaud/Documents/GITLAB/data_bidsif/Sortie_Q1"
-
-# Windows
-# input_path = "C:/Users/weill/Documents/GITLAB/data_bidsif/Entree_Q1"
-# out_path = "C:/Users/weill/Documents/GITLAB/data_bidsif/Sortie_Q1"
-
-# Mac OS
-input_path = "/Users/arnaudweill/Documents/GITLAB/data_bidsif/Entree_Q1"
-out_path = "/Users/arnaudweill/Documents/GITLAB/data_bidsif/Sortie_Q1"
+input_path = "/Volumes/x9/INITIAL_DATABASE"
+out_path = "/Volumes/x9/INITIAL_DATABASE_BIDS_producedASD"
 
 # General Information to be Added Manually
 # ****************************************
 
 # Information on the BIDS Description (in "dataset_information.json")
-Name = "name of the dataset"
+Name = "ADOEFFORT"
+
 # Be careful: separate the authors clearly with ", "
-Authors = "Author One, Author Two, Author Three"
+Authors = "A. Adeli-Koudehi, A.-S Dubarry, M Teschl, M-H Grosbras S. Luchini"
 
 # Information Regarding the BDF Files
 
@@ -55,8 +48,7 @@ InstitutionAddress = "Aix-Marseille University / CNRS, CRPN - UMR 7077, Service 
 # Necessary, not by default in the ".json"
 task = 'nback'
 
-# manufacturer = "Biosemi"
-
+# Manufacturer = "Biosemi"
 manufacturers_model_name = "ActiveTwo"
 
 # eeg_reference = "Cz"

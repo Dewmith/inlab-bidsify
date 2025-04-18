@@ -13,22 +13,8 @@ The code was written in Python and modularized.
 Documentation on [BIDS EEG](https://https://bids-specification.readthedocs.io/en/stable/modality-specific-files/electroencephalography.html).
 
 [MNE BIDS](https://mne.tools/mne-bids/stable/index.html) is used to create a BIDS-compatible directory of EEG or iEEG data.
-MNE can load different data format :
 
-BrainVision (.vhdr, .vmrk, .eeg)
-European data format (.edf)
-BioSemi data format (.bdf)
-General data format (.gdf)
-Neuroscan CNT (.cnt)
-EGI simple binary (.egi)
-EGI MFF (.mff)
-EEGLAB files (.set, .fdt)
-Nicolet (.data)
-eXimia EEG data (.nxe)
-Persyst EEG data (.lay, .dat)
-Nihon Kohden EEG data (.eeg, .21e, .pnt, .log)
-XDF data (.xdf, .xdfz)
-see here for more details : see here https://mne.tools/stable/auto_tutorials/io/20_reading_eeg_data.html#sphx-glr-auto-tutorials-io-20-reading-eeg-data-py
+MNE can load different data format, howerver this package was tested sepcifically with BioSemi data format (.bdf)
 
 **Warning! **
 MNE-BIDS create good file organization, and create metadatafiles required for [BIDS-validator](https://bids-standard.github.io/bids-validator/), but some metadata are very poor and incomplete : just what's needed to validate.
@@ -68,17 +54,13 @@ Under Windows, in the project folder
 Under Mac OS, in the project folder:
 
 * To install python, [go here](https://www.python.org/downloads/release/python-3128/).
-* Create the python virtual environnement and activate it:`python3 -m venv .penv3.12` (for Python version 3.12)
   then `source .penv3.12/bin/activate`
-* Upgrade pip: `pip install --upgrade pip`
-* Once the virtual environment has been activated, install mne:
-  `pip install mne`
-  `pip install mne_bids`
-* Once the virtual environment has been activated, install mne:
-  `pip install mne`
-  `pip install mne_bids`
-  Or to have the same environment (same version) each time:
+* Once the virtual environment has been activated, install the requirements :
   `pip install -r requirements_MacOS_v3.12.txt`
+* In case of trouble you can install separately MNE :
+  `pip install mne`
+  `pip install mne_bids`
+* Upgrade pip: `pip install --upgrade pip`
 
 For both systems
 
@@ -112,4 +94,4 @@ Here’s how to proceed:
   `out_path = "/Users/your_username/Documents/GITLAB/data_bidsif/Sortie_Q1"`
 - Other parameters in the file must be filled in. You only need to provide the necessary information—nothing complicated.
 
-To execute the code: `python create_bids_fron_n_bdf.py` ou `python3 create_bids_fron_n_bdf.py`
+To execute the code: `python create_bids_from_n_bdf.py` ou `python3 create_bids_from_n_bdf.py`
