@@ -6,7 +6,6 @@ It reads a configuration file (`bids_configurator.txt`) which controls:
 - Input/output paths
 - Task and run labeling based on keywords found in filenames
 - Optional metadata descriptions
-- Dataset-wide metadata
 
 ## 📦 Installation
 
@@ -87,12 +86,11 @@ DatasetType = raw
   e.g. `[task_rest]` → `task-rest` in filenames and BIDS paths
   `[run_1]` → `run-01` in filenames and BIDS paths
 
-* Run identifiers **must** be numeric and consecutive (`run_1`, `run_2`, ...)
-* Generates:
 
 ## 📁 Output
 
 * BIDS-compliant folder
+* `dataset_description.json` (updated with user metadata)
 * `participants.tsv` lists each participant and their original folder name
 * For each recording:
 
@@ -103,14 +101,13 @@ DatasetType = raw
     * `"TaskDescription"` — if defined in config
     * `"RunDescription"` — if defined in config
 
-* `dataset_description.json` (updated with user metadata)
-
 ## ⚠️ Notes
 
 * Task and run keywords must not overlap across sections.
+* Run identifiers **must** be numeric and consecutive (`run_1`, `run_2`, ...)
 * The script will only update `dataset_description.json` if it already exists — it will not create one from scratch.
 * Only `.bdf` files are supported.
 
 ## 👨‍💻 Author
 
-Developed by [A.-Sophie Dubarry](mailto:anne-sophie.dubarry@univ-amu.fr) based on previous versions (Arnaud Weill & Simon Moré)
+Developed by [A.-Sophie Dubarry](mailto:anne-sophie.dubarry@univ-amu.fr) (based on previous versions developed by Arnaud Weill & Simon Moré)
