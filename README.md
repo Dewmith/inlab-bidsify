@@ -111,3 +111,8 @@ DatasetType = raw
 ## 👨‍💻 Author
 
 Developed by [A.-Sophie Dubarry](mailto:anne-sophie.dubarry@univ-amu.fr) (based on previous versions developed by Arnaud Weill & Simon Moré)
+
+## 📄 License
+
+This project is licensed under the **GNU General Public License v3.0 (GPLv3)**.
+See the [LICENSE](./LICENSE) file for details.
