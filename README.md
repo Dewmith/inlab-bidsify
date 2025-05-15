@@ -1,115 +1,116 @@
-# BIDSIF
+# BDF to BIDS Converter
 
-## Project decription
+This Python script converts EEG recordings in **BioSemi BDF format** into a **BIDS-compliant dataset** using [MNE-BIDS](https://mne.tools/mne-bids/).
 
-This code aims at bidsifying the EEG data recorded at CRPN.
-The code was developed by A. Weill and A.-S Dubarry
+It reads a configuration file (`bids_configurator.txt`) which controls:
+- Input/output paths
+- Task and run labeling based on keywords found in filenames
+- Optional metadata descriptions
+- Dataset-wide metadata
 
-The code to convert multiple BDF files into a single BIDS folder has been completed.
-The code was written in Python and modularized.
+## 📦 Installation
 
-## Ressource
+This project uses [`uv`](https://github.com/astral-sh/uv) for dependency and virtual environment management. To get started:
 
-Documentation on [BIDS EEG](https://https://bids-specification.readthedocs.io/en/stable/modality-specific-files/electroencephalography.html).
+Install `uv` (if not already installed):
 
-[MNE BIDS](https://mne.tools/mne-bids/stable/index.html) is used to create a BIDS-compatible directory of EEG or iEEG data.
-MNE can load different data format :
+```bash
+curl -Ls https://astral.sh/uv/install.sh | sh
+````
 
-BrainVision (.vhdr, .vmrk, .eeg)
-European data format (.edf)
-BioSemi data format (.bdf)
-General data format (.gdf)
-Neuroscan CNT (.cnt)
-EGI simple binary (.egi)
-EGI MFF (.mff)
-EEGLAB files (.set, .fdt)
-Nicolet (.data)
-eXimia EEG data (.nxe)
-Persyst EEG data (.lay, .dat)
-Nihon Kohden EEG data (.eeg, .21e, .pnt, .log)
-XDF data (.xdf, .xdfz)
-see here for more details : see here https://mne.tools/stable/auto_tutorials/io/20_reading_eeg_data.html#sphx-glr-auto-tutorials-io-20-reading-eeg-data-py
+Create a virtual environment and install dependencies from `requirements.txt`:
 
-**Warning! **
-MNE-BIDS create good file organization, and create metadatafiles required for [BIDS-validator](https://bids-standard.github.io/bids-validator/), but some metadata are very poor and incomplete : just what's needed to validate.
-THat's why it generate warnings from BIDS-validator.
+```bash
+uv venv_bidsif
+uv pip install -r requirements.txt
+```
 
-A dataset generated with BIDS-MNE without metadata completed by humans can't be reused (critical informations will be missing).
+## 🚀 Usage
 
-# How to install and execute
+1. Place your `.bdf` EEG files in subject-specific folders inside the directory defined as `input_path`.
+2. Create a `bids_configurator.txt` file (see example below).
+3. Run the conversion script:
 
-Under Linux, in the project folder:
+Activate the virtual environment:
 
-- Install pip:
-  `sudo apt update sudo apt install python3-pip`
-- Install the module for python virtual environments:
-  sudo apt install python3-venv` `
-- Create the python virtual environnement and activate it:`python3 -m venv .penv3.12` (for Python version 3.12)
-  then `source .penv3.12/bin/activate`
-- Upgrade pip: `python3 -m ensurepip --upgrade`
-- Once the virtual environment has been activated, install mne:
-  `pip install mne`
-  `pip install mne_bids`
-  Or to have the same environment (same version) each time:
-  `pip install -r requirements_Ubuntu_v3.12.txt`
+```bash
+source .venv_bidsif/bin/activate    # Linux/macOS
+.venv_bidsif\Scripts\activate       # Windows
+```
+and execute:
+```bash
+python bidsify.py
+```
 
-Under Windows, in the project folder
+Converted data will be saved to the BIDS directory defined by `output_path`.
 
-* Install Python 3.12 in user mode, not “for all users”. Remember to check “pip” and "py" so that it's already installed. The default installation options should be correct. (Do not use "py" in virtual environment !)
-* Create the python virtual environnement and activate it:`python3 -m venv .penv3.12` (for Python version 3.12)
-  then `source .penv3.12/bin/activate`
-* Upgrade pip: `python3 -m ensurepip --upgrade`
-* Once the virtual environment has been activated, install mne:
-  `pip install mne`
-  `pip install mne_bids`
-  Or to have the same environment (same versions) each time:
-  `pip install -r requirements_Windows_v3.12.txt`
+## 📝 Example `bids_configurator.txt`
 
-Under Mac OS, in the project folder:
+```ini
+[DEFAULT]
+input_path = /path/to/raw_data
+output_path = /path/to/bids_dataset
 
-* To install python, [go here](https://www.python.org/downloads/release/python-3128/).
-* Create the python virtual environnement and activate it:`python3 -m venv .penv3.12` (for Python version 3.12)
-  then `source .penv3.12/bin/activate`
-* Upgrade pip: `pip install --upgrade pip`
-* Once the virtual environment has been activated, install mne:
-  `pip install mne`
-  `pip install mne_bids`
-* Once the virtual environment has been activated, install mne:
-  `pip install mne`
-  `pip install mne_bids`
-  Or to have the same environment (same version) each time:
-  `pip install -r requirements_MacOS_v3.12.txt`
+[task_rest]
+keywords = rest, baseline
+description = Participants rest with eyes closed.
 
-For both systems
+[task_stim]
+keywords = stim
+description = Visual stimuli presented every 2 seconds.
 
-* Modify the “bids_configurator.txt” file for the “input_path” (subNN folder containing .bdf files) and “out_path” (bids folder) variables.
-  *WARNING: paths must not be relative!*
-  Other information can be modified in this file.
+[run_1]
+keywords = block1, run1
+description = First run before break.
 
-Here’s how to proceed:
+[run_2]
+keywords = block2, run2
+description = Second run after break.
 
-* First, place the folders of the different subjects**"sub01"** ,**"sub02"** , etc., in the input folder, for example, your folder`/home/$USER/Documents/GITLAB/data_bidsif/Entree_Q1`(Linux) or `C:\Users\your_username\Documents\GITLAB\data_bidsif\Entree_Q1` (Windows)
 
-- ![](assets/20250114_105030_Dossier_entree_1.jpg)
-- In each subject folder **"subNN"** , the **associated BDF files** must be present.
-- ![](assets/20250114_105315_Dossier_entree_2.jpg)
-- In your working directory, for example, `/home/$USER/Documents/GITLAB/data_bidsif` (Linux) or `C:\Users\your_username\Documents\GITLAB\data_bidsif` (Windows), create the output folder, for instance, **`Sortie_Q1`** , which must be empty. If a BIDS folder has already been created, rerunning the script will update it.
-- ![](assets/20250114_110016_Dossier_sortie.jpg)
--
--
-- In the file **"bids_configurator.txt"** , modify the parameters as follows, for example:
+[DATASET_DESCRIPTION]
+Name = ExampleDataset
+BIDSVersion = 1.8.0
+Authors = Alice Dupont, John Smith
+Acknowledgements = Thanks to all participants
+Funding = Funded by the ANR project
+ReferencesAndLinks = https://example.org
+DatasetType = raw
+```
 
-  Linux:
-  `input_path = "/home/your_username/Documents/GITLAB/data_bidsif/Entree_Q1"`
-  `out_path = "/home/your_username/Documents/GITLAB/data£_bidsif/Sortie_Q1"`
+## ⚙️ Features
 
-  Windows:
-  `input_path = "C:\Users\your_username\Documents\GITLAB\data_bidsif\Entree_Q1"`
-  `out_path = "C:\Users\your_username\Documents\GITLAB\data_bidsif\Sortie_Q1"`
+* Automatically builds a BIDS-compliant folder structure
+* Detects **sessions** based on `.bdf` file creation date
+* Infers **task** and **run** labels based on filename keywords
+* Task and run names are extracted from the section headers:
+  e.g. `[task_rest]` → `task-rest` in filenames and BIDS paths
+  `[run_1]` → `run-01` in filenames and BIDS paths
 
-  Mac OS:
-  `input_path = "/Users/your_username/Documents/GITLAB/data_bidsif/Entree_Q1"`
-  `out_path = "/Users/your_username/Documents/GITLAB/data_bidsif/Sortie_Q1"`
-- Other parameters in the file must be filled in. You only need to provide the necessary information—nothing complicated.
+* Run identifiers **must** be numeric and consecutive (`run_1`, `run_2`, ...)
+* Generates:
 
-To execute the code: `python create_bids_fron_n_bdf.py` ou `python3 create_bids_fron_n_bdf.py`
+## 📁 Output
+
+* BIDS-compliant folder
+* `participants.tsv` lists each participant and their original folder name
+* For each recording:
+
+  * Raw data is copied to `sub-XX/ses-YY/eeg/`
+  * JSON Sidecar files are created `*_eeg.json` including:
+
+    * `"OriginalFilename"` — the original `.bdf` filename
+    * `"TaskDescription"` — if defined in config
+    * `"RunDescription"` — if defined in config
+
+* `dataset_description.json` (updated with user metadata)
+
+## ⚠️ Notes
+
+* Task and run keywords must not overlap across sections.
+* The script will only update `dataset_description.json` if it already exists — it will not create one from scratch.
+* Only `.bdf` files are supported.
+
+## 👨‍💻 Author
+
+Developed by [A.-Sophie Dubarry](mailto:anne-sophie.dubarry@univ-amu.fr) based on previous versions (Arnaud Weill & Simon Moré)
