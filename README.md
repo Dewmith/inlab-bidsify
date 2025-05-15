@@ -1,6 +1,12 @@
-# BIDS Converter for EEG
+# BDF to BIDS Converter
 
-This script automatically converts EEG recordings in `.bdf` format into a standardized [BIDS](https://bids.neuroimaging.io/) structure using the [MNE-BIDS](https://mne.tools/mne-bids/) library. It relies on a configuration file (`bids_configurator.txt`) to define paths, tasks, runs, and dataset metadata.
+This Python script converts EEG recordings in **BioSemi BDF format** into a **BIDS-compliant dataset** using [MNE-BIDS](https://mne.tools/mne-bids/).
+
+It reads a configuration file (`bids_configurator.txt`) which controls:
+- Input/output paths
+- Task and run labeling based on keywords found in filenames
+- Optional metadata descriptions
+- Dataset-wide metadata
 
 ## 📦 Installation
 
@@ -19,19 +25,19 @@ uv venv_bidsif
 uv pip install -r requirements.txt
 ```
 
-(Optionally) activate the environment:
-
-```bash
-source .venv_bidsif/bin/activate    # Linux/macOS
-.venv_bidsif\Scripts\activate       # Windows
-```
-
 ## 🚀 Usage
 
 1. Place your `.bdf` EEG files in subject-specific folders inside the directory defined as `input_path`.
 2. Create a `bids_configurator.txt` file (see example below).
 3. Run the conversion script:
 
+Activate the virtual environment:
+
+```bash
+source .venv_bidsif/bin/activate    # Linux/macOS
+.venv_bidsif\Scripts\activate       # Windows
+```
+and execute:
 ```bash
 python bidsify.py
 ```
@@ -47,15 +53,20 @@ output_path = /path/to/bids_dataset
 
 [task_rest]
 keywords = rest, baseline
+description = Participants rest with eyes closed.
 
 [task_stim]
-keywords = stim, trial
+keywords = stim
+description = Visual stimuli presented every 2 seconds.
 
 [run_1]
-keywords = session1, run1
+keywords = block1, run1
+description = First run before break.
 
 [run_2]
-keywords = session2, run2
+keywords = block2, run2
+description = Second run after break.
+
 
 [DATASET_DESCRIPTION]
 Name = ExampleDataset
@@ -67,16 +78,32 @@ ReferencesAndLinks = https://example.org
 DatasetType = raw
 ```
 
-## 📂 Features
+## ⚙️ Features
 
 * Automatically builds a BIDS-compliant folder structure
-* Detects sessions based on `.bdf` file creation date
-* Infers task and run labels based on filename keywords
+* Detects **sessions** based on `.bdf` file creation date
+* Infers **task** and **run** labels based on filename keywords
+* Task and run names are extracted from the section headers:
+  e.g. `[task_rest]` → `task-rest` in filenames and BIDS paths
+  `[run_1]` → `run-01` in filenames and BIDS paths
+
+* Run identifiers **must** be numeric and consecutive (`run_1`, `run_2`, ...)
 * Generates:
 
-  * `participants.tsv` (maps original folder names to BIDS subject IDs)
-  * `dataset_description.json` (updated with user metadata)
-  * JSON sidecar files per run including the original filename
+## 📁 Output
+
+* BIDS-compliant folder
+* `participants.tsv` lists each participant and their original folder name
+* For each recording:
+
+  * Raw data is copied to `sub-XX/ses-YY/eeg/`
+  * JSON Sidecar files are created `*_eeg.json` including:
+
+    * `"OriginalFilename"` — the original `.bdf` filename
+    * `"TaskDescription"` — if defined in config
+    * `"RunDescription"` — if defined in config
+
+* `dataset_description.json` (updated with user metadata)
 
 ## ⚠️ Notes
 

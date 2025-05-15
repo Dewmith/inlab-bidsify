@@ -1,32 +1,9 @@
-# =============================================================================
-# This function is part of the BIDSIF project
-#  
-# This software is distributed under the terms of the GNU General Public License
-# as published by the Free Software Foundation. Further details on the GPLv3
-# license can be found at http://www.gnu.org/copyleft/gpl.html.
-#  
-# FOR RESEARCH PURPOSES ONLY. THE SOFTWARE IS PROVIDED "AS IS," AND IN THE
-# HOPE THAT IT WILL BE USEFUL BUT WITHOUT ANY WARRANTY, EXPRESS OR IMPLIED,
-# INCLUDING BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY AND FITNESS FOR 
-# A PARTICULAR PURPOSE, NOR DO THEY ASSUME ANY LIABILITY OR RESPONSIBILITY
-# FOR THE USE OF THIS SOFTWARE.
-# 
-# =============================================================================
-# Authors: Arnaud Weill, Anne-Sophie Dubarry
-#
 # This file is the configuration file for this project
-#
-# Created on Thursday, July 11, 2024
 
-# Operational Information
-# ***********************
-
-# Input and Output Directories
 [DEFAULT] 
-
 # Input and Output Directories
 input_path = /Volumes/x9/INITIAL_DATABASE
-output_path = /Volumes/x9/test_BIDSIF
+output_path = /Volumes/x9/test_BIDSIF_bis
 
 # General Information to be Added Manually
 # ****************************************
@@ -50,15 +27,6 @@ ManufacturersModelName = "ActiveTwo"
 
 SubjectArtefactDescription = "n/a"
 
-# --- Sessions ---
-#[session_ses-01]
-#description = Day 1 session
-#keywords = baseline, day1, ses01
-
-#[session_ses-02]
-#description = Day 2 session
-#keywords = followup, day2, ses02
-
 # --- Tasks --- WARNING : prevent using special characters in task names (Unallowed `-`, `_`, or `/` )
 [task_NbackRolling]
 description = N-back task with rolling startegy 
@@ -76,7 +44,7 @@ keywords = proactive
 description = AX-CPT task with reactive strategy 
 keywords = reactive
 
-# --- Runs ---
+# --- Runs --- WARNING : prevent using special characters in task names (Unallowed `-`, `_`, or `/` )
 [run_1]
 description = Training session
 keywords = train

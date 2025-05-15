@@ -159,12 +159,23 @@ def create_bids_structure(input_path, output_path, config):
                 # Write data to BIDS format
                 write_raw_bids(raw, bids_path, overwrite=True)
 
-                # Save original BDF filename to a JSON sidecar
+                # Save original BDF filename and task/run descriptions to JSON sidecar
                 json_path = bids_path.copy().update(extension='.json').fpath
-                # Add the original filename to the existing JSON metadata
                 with open(json_path, 'r+') as jf:
                     metadata = json.load(jf)
                     metadata["OriginalFilename"] = bdf
+
+                    # Add task description if available
+                    task_section = f"task_{task_label}"
+                    if config.has_section(task_section) and config.has_option(task_section, "description"):
+                        metadata["TaskDescription"] = config.get(task_section, "description")
+
+                    # Add run description if matched_run is not None and a description exists
+                    if matched_run:
+                        run_section = f"run_{matched_run}"
+                        if config.has_section(run_section) and config.has_option(run_section, "description"):
+                            metadata["RunDescription"] = config.get(run_section, "description")
+
                     jf.seek(0)
                     json.dump(metadata, jf, indent=4)
                     jf.truncate()
