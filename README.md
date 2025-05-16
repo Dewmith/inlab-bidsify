@@ -17,10 +17,22 @@ Install `uv` (if not already installed):
 curl -Ls https://astral.sh/uv/install.sh | sh
 ````
 
-Create a virtual environment and install dependencies from `requirements.txt`:
+Create a virtual environment :
 
 ```bash
 uv venv_bidsif
+```
+
+Activate the virtual environment:
+
+```bash
+source .venv_bidsif/bin/activate    # Linux/macOS
+.venv_bidsif\Scripts\activate       # Windows
+```
+
+Install dependencies from `requirements.txt`
+
+```bash
 uv pip install -r requirements.txt
 ```
 
@@ -30,13 +42,7 @@ uv pip install -r requirements.txt
 2. Create a `bids_configurator.txt` file (see example below).
 3. Run the conversion script:
 
-Activate the virtual environment:
-
-```bash
-source .venv_bidsif/bin/activate    # Linux/macOS
-.venv_bidsif\Scripts\activate       # Windows
-```
-and execute:
+Activate the virtual environment if it is not activated (see above) and execute:
 ```bash
 python bidsify.py
 ```
@@ -50,11 +56,11 @@ Converted data will be saved to the BIDS directory defined by `output_path`.
 input_path = /path/to/raw_data
 output_path = /path/to/bids_dataset
 
-[task_rest]
+[task_restingtask]
 keywords = rest, baseline
 description = Participants rest with eyes closed.
 
-[task_stim]
+[task_stimtask]
 keywords = stim
 description = Visual stimuli presented every 2 seconds.
 
@@ -81,15 +87,15 @@ DatasetType = raw
 
 * Automatically builds a BIDS-compliant folder structure
 * Detects **sessions** based on `.bdf` file creation date
-* Infers **task** and **run** labels based on filename keywords
 * Task and run names are extracted from the section headers:
-  e.g. `[task_rest]` → `task-rest` in filenames and BIDS paths
-  `[run_1]` → `run-01` in filenames and BIDS paths
+  e.g. `[task_restingtask]` → one task `restingtask` in filenames and BIDS paths
+  `[run_1]` → one run `run-01` in filenames and BIDS paths
+* Infers **task** and **run** labels based on filename keywords (e.g. ParticipantID_rest.bdf will be detected and saved in BIDS as a `restingtask`)
 
 
 ## 📁 Output
 
-* BIDS-compliant folder
+* BIDS-compliant dataset
 * `dataset_description.json` (updated with user metadata)
 * `participants.tsv` lists each participant and their original folder name
 * For each recording:
