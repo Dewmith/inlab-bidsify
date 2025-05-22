@@ -51,14 +51,12 @@ def check_conflicting_keywords(config):
                     raise ValueError(f"Keyword '{keyword}' found in both '{keyword_map[keyword]}' and '{section}'.")
                 keyword_map[keyword] = section
  
- # Edit the dataset_description files with info provided by the user
 def update_dataset_description(output_path, config):
     """
     Update or add entries to dataset_description.json using values from the
     [DATASET_DESCRIPTION] section of the config file.
     """
     dataset_description_path  = os.path.join(output_path, "dataset_description.json")
-
     if not os.path.exists(dataset_description_path):
         print("Warning: dataset_description.json not found. Skipping update.")
         return
@@ -66,10 +64,12 @@ def update_dataset_description(output_path, config):
     with open(dataset_description_path, 'r') as f:
         dataset_description = json.load(f)
 
+    if not config.has_section("DATASET_DESCRIPTION") or not config.items("DATASET_DESCRIPTION"):
+        return
+
     # Replace or add keys from the config file
-    if config.has_section("DATASET_DESCRIPTION"):
-        for key in config["DATASET_DESCRIPTION"]:
-            dataset_description[key] = config["DATASET_DESCRIPTION"][key]
+    for key, value in config.items("DATASET_DESCRIPTION"):
+        dataset_description[key] = value.strip('"').strip("'")
 
     with open(dataset_description_path, 'w') as f:
         json.dump(dataset_description, f, indent=4)
@@ -88,9 +88,6 @@ def create_bids_structure(input_path, output_path, config):
 
     # Ensure keywords in config are not reused across different sections
     check_conflicting_keywords(config)
-
-    # Update the description-dataset.jsdon according to the config
-    update_dataset_description(output_path, config)
 
     # Map tasks from config
     tasks = {t: config.get(t, "keywords").split(',') for t in config.sections() if t.startswith("task_")}
@@ -179,6 +176,9 @@ def create_bids_structure(input_path, output_path, config):
                     jf.seek(0)
                     json.dump(metadata, jf, indent=4)
                     jf.truncate()
+
+    # Update the description-dataset.jsdon according to the config
+    update_dataset_description(output_path, config)
 
 # Main entry point to read config and launch processing
 def main():

@@ -2,8 +2,8 @@
 
 [DEFAULT] 
 # Input and Output Directories
-input_path = /Volumes/x9/INITIAL_DATABASE
-output_path = /Volumes/x9/test_BIDSIF_bis
+input_path = /Volumes/x9/junk
+output_path = /Volumes/x9/junkout
 
 # General Information to be Added Manually
 # ****************************************
