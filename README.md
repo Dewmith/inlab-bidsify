@@ -20,7 +20,7 @@ curl -Ls https://astral.sh/uv/install.sh | sh
 Create a virtual environment :
 
 ```bash
-uv venv venv_bidsif --python 3.10.0
+uv venv .venv_bidsif --python 3.10.0
 ```
 
 Activate the virtual environment:
