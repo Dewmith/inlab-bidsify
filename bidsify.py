@@ -51,6 +51,14 @@ def check_conflicting_keywords(config):
                     raise ValueError(f"Keyword '{keyword}' found in both '{keyword_map[keyword]}' and '{section}'.")
                 keyword_map[keyword] = section
  
+def parse_value(value):
+    value = value.strip().strip('"').strip("'")
+
+    if "," in value:
+        return [v.strip() for v in value.split(",") if v.strip()]
+
+    return value
+
 def update_dataset_description(output_path, config):
     """
     Update or add entries to dataset_description.json using values from the
@@ -69,8 +77,8 @@ def update_dataset_description(output_path, config):
 
     # Replace or add keys from the config file
     for key, value in config.items("DATASET_DESCRIPTION"):
-        dataset_description[key] = value.strip('"').strip("'")
-
+        dataset_description[key] = parse_value(value)
+        
     with open(dataset_description_path, 'w') as f:
         json.dump(dataset_description, f, indent=4)
 

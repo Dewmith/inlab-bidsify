@@ -2,15 +2,16 @@
 
 [DEFAULT] 
 # Input and Output Directories
-input_path = /Volumes/x9/junk
-output_path = /Volumes/x9/junkout
+input_path = /Users/annesophiedubarry/SynologyDrive/in_progress/BIDSIF/data/EXAMPLE_DATASET
+output_path = /Users/annesophiedubarry/SynologyDrive/in_progress/BIDSIF/data/BIDS_DATASET
 
 # General Information to be Added Manually
 # ****************************************
 
 [DATASET_DESCRIPTION]
 Name = "ADOEFFORT"
-Authors = "A. Adeli-Koudehi, A.-S Dubarry, M Teschl, M-H Grosbras S. Luchini"
+Authors = "A. Adeli-Koudehi , A.-S Dubarry , M Teschl, M-H Grosbras, S. Luchini"
+DatasetType = "blabla"
 
 # EEG Configuration
 InstitutionName = "CRPN - UMR 7077"
