@@ -11,11 +11,27 @@ It reads a configuration file (`bids_configurator.txt`) which controls:
 
 This project uses [`uv`](https://github.com/astral-sh/uv) for dependency and virtual environment management. To get started:
 
-Install `uv` (if not already installed):
+Install `uv` (if not already installed) using one of the following methods:
+
+**On Linux/macOS:**
 
 ```bash
 curl -Ls https://astral.sh/uv/install.sh | sh
-````
+```
+
+**On Windows (PowerShell):**
+
+```powershell
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+
+**From [PyPI](https://pypi.org/project/uv/) with pip:**
+
+```bash
+pip install uv
+```
+
+See the [official uv installation guide](https://docs.astral.sh/uv/getting-started/installation/) for details.
 
 Create a virtual environment :
 
@@ -23,11 +39,24 @@ Create a virtual environment :
 uv venv .venv_bidsif --python 3.10.0
 ```
 
-Activate the virtual environment:
+Activate the virtual environment using the command for your shell:
+
+**On Linux/macOS:**
 
 ```bash
-source .venv_bidsif/bin/activate    # Linux/macOS
-.venv_bidsif\Scripts\activate       # Windows
+source .venv_bidsif/bin/activate
+```
+
+**On Windows (PowerShell):**
+
+```powershell
+.\.venv_bidsif\Scripts\Activate.ps1
+```
+
+**On Windows (Command Prompt):**
+
+```bat
+.venv_bidsif\Scripts\activate.bat
 ```
 
 Install dependencies from `requirements.txt`
@@ -48,6 +77,28 @@ python bidsify.py
 ```
 
 Converted data will be saved to the BIDS directory defined by `output_path`.
+
+## 📂 Example input data structure
+
+For `input_path = /path/to/raw_data`, organize your recordings as follows:
+
+```text
+raw_data/
+├── participant_001/
+│   ├── rest.bdf
+│   ├── block1.bdf
+│   └── stim.bdf
+├── participant_002/
+│   ├── rest.bdf
+│   ├── block1.bdf
+    ├── block2.bdf
+│   └── stim.bdf
+```
+
+- Each folder directly inside `raw_data` represents one participant. Folder names are sorted and assigned BIDS IDs: `participant_001` becomes `sub-01`, and `participant_002` becomes `sub-02` in this example.
+- Place `.bdf` files directly inside each participant folder; nested folders are not scanned.
+- With the configuration below, filenames containing `rest` map to task `restingtask`, and filenames containing `stim` map to task `stimtask`.
+- `block1` and `block2` map to `run-01` and `run-02`, respectively. Filename keyword matching is case-sensitive.
 
 ## 📝 Example `bids_configurator.txt`
 
@@ -113,10 +164,6 @@ DatasetType = raw
 * Run identifiers **must** be numeric and consecutive (`run_1`, `run_2`, ...)
 * The script will only update `dataset_description.json` if it already exists — it will not create one from scratch.
 * Only `.bdf` files are supported.
-
-## 👨‍💻 Author
-
-Developed by [A.-Sophie Dubarry](mailto:anne-sophie.dubarry@univ-amu.fr) (based on previous versions developed by Arnaud Weill & Simon Moré)
 
 ## 📄 License
 
