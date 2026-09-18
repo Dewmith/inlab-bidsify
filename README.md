@@ -2,10 +2,11 @@
 
 This Python script converts EEG recordings in **BioSemi BDF format** into a **BIDS-compliant dataset** using [MNE-BIDS](https://mne.tools/mne-bids/).
 
-It reads a configuration file (`bids_configurator.txt`) which controls:
-- Input/output paths
+It reads `bids_configurator.txt` from the input dataset directory. This file controls:
 - Task and run labeling based on keywords found in filenames
 - Optional metadata descriptions
+
+Input and output directories are supplied as command-line arguments.
 
 ## 📦 Installation
 
@@ -67,23 +68,45 @@ uv pip install -r requirements.txt
 
 ## 🚀 Usage
 
-1. Place your `.bdf` EEG files in subject-specific folders inside the directory defined as `input_path`.
-2. Create a `bids_configurator.txt` file (see example below).
+1. Place your `.bdf` EEG files in subject-specific folders inside your input directory.
+2. Copy `bids_configurator.example.txt` from this repository into your input directory, rename it to `bids_configurator.txt`, and customize its rules and metadata for your dataset (see example below).
 3. Run the conversion script:
 
 Activate the virtual environment if it is not activated (see above) and execute:
 ```bash
-python bidsify.py
+python bidsify.py --input "/path/to/raw_data" --output "/path/to/bids_dataset"
 ```
 
-Converted data will be saved to the BIDS directory defined by `output_path`.
+For example, on Windows (PowerShell), quote paths that contain spaces:
+
+```powershell
+python bidsify.py --input "C:\Data\raw recordings" --output "C:\Data\bids dataset"
+```
+
+This command reads `C:\Data\raw recordings\bids_configurator.txt` automatically.
+Each dataset must have its own `bids_configurator.txt` directly inside the directory
+passed to `--input`. Only that configuration is read; there is no fallback to a file
+in the working directory or the code directory. The script does not create this file.
+
+Both options are required. The input directory must exist; the output directory is
+created if needed. Converted data will be saved to the directory passed to `--output`.
+Relative paths are resolved from the current working directory.
+
+Run `python bidsify.py --help` for usage information. Missing arguments or configuration,
+invalid paths, and conversion failures result in a nonzero exit status.
+
+If you have an older configuration, move it into your input dataset directory as
+`bids_configurator.txt` and remove `input_path` and `output_path` from
+`[DEFAULT]` (and remove that section if it is empty). These legacy defaults are
+ignored; the paths must always be supplied on the command line.
 
 ## 📂 Example input data structure
 
-For `input_path = /path/to/raw_data`, organize your recordings as follows:
+For `--input "/path/to/raw_data"`, organize your recordings as follows:
 
 ```text
 raw_data/
+├── bids_configurator.txt
 ├── participant_001/
 │   ├── rest.bdf
 │   ├── block1.bdf
@@ -97,16 +120,13 @@ raw_data/
 
 - Each folder directly inside `raw_data` represents one participant. Folder names are sorted and assigned BIDS IDs: `participant_001` becomes `sub-01`, and `participant_002` becomes `sub-02` in this example.
 - Place `.bdf` files directly inside each participant folder; nested folders are not scanned.
+- The configuration file at the dataset root is not treated as a participant or recording.
 - With the configuration below, filenames containing `rest` map to task `restingtask`, and filenames containing `stim` map to task `stimtask`.
 - `block1` and `block2` map to `run-01` and `run-02`, respectively. Filename keyword matching is case-sensitive.
 
 ## 📝 Example `bids_configurator.txt`
 
 ```ini
-[DEFAULT]
-input_path = /path/to/raw_data
-output_path = /path/to/bids_dataset
-
 [task_restingtask]
 keywords = rest, baseline
 description = Participants rest with eyes closed.
@@ -164,6 +184,17 @@ DatasetType = raw
 * Run identifiers **must** be numeric and consecutive (`run_1`, `run_2`, ...)
 * The script will only update `dataset_description.json` if it already exists — it will not create one from scratch.
 * Only `.bdf` files are supported.
+
+## 🧪 Tests
+
+With the project dependencies installed, run the CLI and configuration tests from
+the project directory:
+
+```bash
+python -m unittest discover -s tests -v
+```
+
+These tests use temporary directories and do not require EEG recordings.
 
 ## 📄 License
 

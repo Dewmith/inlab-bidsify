@@ -14,30 +14,30 @@
 # =============================================================================
 # Authors: A.-Sophie Dubarry
 
+import argparse
 import os
 import configparser
 import json
+import sys
 from datetime import datetime
 from mne_bids import BIDSPath, write_raw_bids
 import mne
 
-# Read the configuration file and extract required paths
+# Read conversion rules and metadata from the configuration file
 def read_config(config_file):
     config = configparser.ConfigParser()
     config.optionxform = str  # Preserve case for keys
-    config.read(config_file)
-
     try:
-        input_path = config.get("DEFAULT", "input_path")
-    except KeyError:
-        raise KeyError("The 'input_path' key is missing in the configuration file.")
+        with open(config_file, encoding="utf-8") as config_stream:
+            config.read_file(config_stream)
+    except (OSError, UnicodeError, configparser.Error) as e:
+        raise ValueError(f"Cannot read configuration file '{config_file}': {e}") from e
 
-    try:
-        output_path = config.get("DEFAULT", "output_path")
-    except KeyError:
-        raise KeyError("The 'output_path' key is missing in the configuration file.")
+    # Legacy path defaults must not be inherited by dataset metadata.
+    config.remove_option(config.default_section, "input_path")
+    config.remove_option(config.default_section, "output_path")
 
-    return input_path, output_path, config
+    return config
 
 # Check for conflicting keywords across config sections
 # This helps avoid ambiguity in how files are categorized
@@ -82,17 +82,24 @@ def update_dataset_description(output_path, config):
     with open(dataset_description_path, 'w') as f:
         json.dump(dataset_description, f, indent=4)
 
+def validate_input_path(input_path):
+    """Require an existing input directory before reading config or converting."""
+    if not os.path.exists(input_path):
+        raise FileNotFoundError(f"Input path '{input_path}' not found.")
+    if not os.path.isdir(input_path):
+        raise NotADirectoryError(f"Input path '{input_path}' is not a directory.")
+
+
 # Create the BIDS structure using logic for auto-sessions and config-based tasks
 # Each session is automatically created based on the file creation date
 # Task is inferred from config, and run is automatically enumerated
 # A JSON sidecar file is created for each run recording the original filename
 def create_bids_structure(input_path, output_path, config):
-    
-    if not os.path.exists(input_path):
-        raise FileNotFoundError(f"Input path '{input_path}' not found.")
+    validate_input_path(input_path)
 
-    if not os.path.exists(output_path):
-        os.makedirs(output_path)
+    if os.path.exists(output_path) and not os.path.isdir(output_path):
+        raise NotADirectoryError(f"Output path '{output_path}' is not a directory.")
+    os.makedirs(output_path, exist_ok=True)
 
     # Ensure keywords in config are not reused across different sections
     check_conflicting_keywords(config)
@@ -189,14 +196,32 @@ def create_bids_structure(input_path, output_path, config):
     update_dataset_description(output_path, config)
 
 # Main entry point to read config and launch processing
-def main():
-    config_file = "bids_configurator.txt"
+def main(argv=None):
+    parser = argparse.ArgumentParser(
+        description=(
+            "Convert BioSemi BDF recordings to BIDS using bids_configurator.txt "
+            "in the input directory."
+        )
+    )
+    parser.add_argument(
+        "--input", required=True, metavar="DIRECTORY",
+        help="Existing directory containing bids_configurator.txt and subject folders with BDF recordings.",
+    )
+    parser.add_argument(
+        "--output", required=True, metavar="DIRECTORY",
+        help="BIDS output directory; created if it does not exist.",
+    )
+    args = parser.parse_args(argv)
+    config_file = os.path.join(args.input, "bids_configurator.txt")
 
     try:
-        input_path, output_path, config = read_config(config_file)
-        create_bids_structure(input_path, output_path, config)
+        validate_input_path(args.input)
+        config = read_config(config_file)
+        create_bids_structure(args.input, args.output, config)
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"Error: {e}", file=sys.stderr)
+        return 1
+    return 0
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

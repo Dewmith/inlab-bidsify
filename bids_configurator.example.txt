@@ -1,9 +1,7 @@
-# This file is the configuration file for this project
+# Example dataset configuration: copy this file into your input dataset directory
+# as bids_configurator.txt, then customize the rules and metadata for that dataset.
 
-[DEFAULT] 
-# Input and Output Directories
-input_path = /Users/annesophiedubarry/SynologyDrive/in_progress/BIDSIF/data/EXAMPLE_DATASET
-output_path = /Users/annesophiedubarry/SynologyDrive/in_progress/BIDSIF/data/BIDS_DATASET
+# Supply input and output directories using --input and --output when running bidsify.py.
 
 # General Information to be Added Manually
 # ****************************************
