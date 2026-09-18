@@ -9,7 +9,7 @@
 [DATASET_DESCRIPTION]
 Name = "ADOEFFORT"
 Authors = "A. Adeli-Koudehi , A.-S Dubarry , M Teschl, M-H Grosbras, S. Luchini"
-DatasetType = "blabla"
+DatasetType = raw
 
 # EEG Configuration
 InstitutionName = "CRPN - UMR 7077"

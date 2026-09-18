@@ -154,6 +154,13 @@ ReferencesAndLinks = https://example.org
 DatasetType = raw
 ```
 
+This converter writes **raw EEG BIDS datasets**. In `[DATASET_DESCRIPTION]`,
+`DatasetType` must be `raw`; surrounding whitespace and matching single or double
+quotes are accepted. If the field or section is omitted, the output defaults to
+`"DatasetType": "raw"`. An explicitly blank or different value (including
+`derivative` or `study`) stops conversion with a nonzero exit status before any
+recording is read or output is created or changed.
+
 ## ⚙️ Features
 
 * Automatically builds a BIDS-compliant folder structure
@@ -185,16 +192,6 @@ DatasetType = raw
 * The script will only update `dataset_description.json` if it already exists — it will not create one from scratch.
 * Only `.bdf` files are supported.
 
-## 🧪 Tests
-
-With the project dependencies installed, run the CLI and configuration tests from
-the project directory:
-
-```bash
-python -m unittest discover -s tests -v
-```
-
-These tests use temporary directories and do not require EEG recordings.
 
 ## 📄 License
 

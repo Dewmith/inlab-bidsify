@@ -59,11 +59,26 @@ def parse_value(value):
 
     return value
 
+def validate_dataset_type(config):
+    """Return the normalized raw dataset type or reject incompatible metadata."""
+    configured_value = config.get("DATASET_DESCRIPTION", "DatasetType", fallback="raw")
+    value = configured_value.strip()
+    if len(value) >= 2 and value[0] == value[-1] and value[0] in ('"', "'"):
+        value = value[1:-1].strip()
+    if value != "raw":
+        raise ValueError(
+            f"Invalid DatasetType {configured_value!r} in [DATASET_DESCRIPTION]. "
+            "This converter writes raw EEG BIDS datasets; set DatasetType = raw "
+            "(or omit it)."
+        )
+    return value
+
 def update_dataset_description(output_path, config):
     """
     Update or add entries to dataset_description.json using values from the
     [DATASET_DESCRIPTION] section of the config file.
     """
+    dataset_type = validate_dataset_type(config)
     dataset_description_path  = os.path.join(output_path, "dataset_description.json")
     if not os.path.exists(dataset_description_path):
         print("Warning: dataset_description.json not found. Skipping update.")
@@ -72,12 +87,12 @@ def update_dataset_description(output_path, config):
     with open(dataset_description_path, 'r') as f:
         dataset_description = json.load(f)
 
-    if not config.has_section("DATASET_DESCRIPTION") or not config.items("DATASET_DESCRIPTION"):
-        return
-
     # Replace or add keys from the config file
-    for key, value in config.items("DATASET_DESCRIPTION"):
-        dataset_description[key] = parse_value(value)
+    if config.has_section("DATASET_DESCRIPTION"):
+        for key, value in config.items("DATASET_DESCRIPTION"):
+            if key != "DatasetType":
+                dataset_description[key] = parse_value(value)
+    dataset_description["DatasetType"] = dataset_type
         
     with open(dataset_description_path, 'w') as f:
         json.dump(dataset_description, f, indent=4)
@@ -96,6 +111,7 @@ def validate_input_path(input_path):
 # A JSON sidecar file is created for each run recording the original filename
 def create_bids_structure(input_path, output_path, config):
     validate_input_path(input_path)
+    validate_dataset_type(config)
 
     if os.path.exists(output_path) and not os.path.isdir(output_path):
         raise NotADirectoryError(f"Output path '{output_path}' is not a directory.")
