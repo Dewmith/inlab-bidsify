@@ -1,5 +1,5 @@
 # Example dataset configuration: copy this file into your input dataset directory
-# as bids_configurator.txt, then customize the rules and metadata for that dataset.
+# as bids_configurator.toml, then customize the rules and metadata for that dataset.
 
 # Supply input and output directories using --input and --output when running bidsify.py.
 
@@ -8,8 +8,8 @@
 
 [DATASET_DESCRIPTION]
 Name = "ADOEFFORT"
-Authors = "A. Adeli-Koudehi , A.-S Dubarry , M Teschl, M-H Grosbras, S. Luchini"
-DatasetType = raw
+Authors = ["A. Adeli-Koudehi", "A.-S Dubarry", "M Teschl", "M-H Grosbras", "S. Luchini"]
+DatasetType = "raw"
 
 # EEG Configuration
 InstitutionName = "CRPN - UMR 7077"
@@ -28,27 +28,27 @@ SubjectArtefactDescription = "n/a"
 
 # --- Tasks --- WARNING : prevent using special characters in task names (Unallowed `-`, `_`, or `/` )
 [task_NbackRolling]
-description = N-back task with rolling startegy 
-keywords = rolling
+description = "N-back task with rolling strategy"
+keywords = ["rolling"]
 
 [task_NbackStatic]
-description = N-back task with static startegy 
-keywords = static
+description = "N-back task with static strategy"
+keywords = ["static"]
 
 [task_AxcptProactive]
-description = AX-CPT task with proactive strategy 
-keywords = proactive
+description = "AX-CPT task with proactive strategy"
+keywords = ["proactive"]
 
 [task_AxcptReactive]
-description = AX-CPT task with reactive strategy 
-keywords = reactive
+description = "AX-CPT task with reactive strategy"
+keywords = ["reactive"]
 
-# --- Runs --- WARNING : prevent using special characters in task names (Unallowed `-`, `_`, or `/` )
+# --- Runs --- Use consecutive table names: run_1, run_2, ...
 [run_1]
-description = Training session
-keywords = train
+description = "Training session"
+keywords = ["train"]
 
 [run_2]
-description = Testing session
-keywords = test
+description = "Testing session"
+keywords = ["test"]
 

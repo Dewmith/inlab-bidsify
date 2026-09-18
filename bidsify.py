@@ -16,62 +16,97 @@
 
 import argparse
 import os
-import configparser
 import json
 import sys
 from datetime import datetime
 from mne_bids import BIDSPath, write_raw_bids
 import mne
+import tomlkit
+from tomlkit.exceptions import ParseError
 
 # Read conversion rules and metadata from the configuration file
 def read_config(config_file):
-    config = configparser.ConfigParser()
-    config.optionxform = str  # Preserve case for keys
+    """Read and validate a TOML configuration as ordinary Python values."""
+    if os.path.splitext(os.fspath(config_file))[1].lower() != ".toml":
+        raise ValueError("Configuration files must use the .toml extension.")
     try:
         with open(config_file, encoding="utf-8") as config_stream:
-            config.read_file(config_stream)
-    except (OSError, UnicodeError, configparser.Error) as e:
+            config = tomlkit.parse(config_stream.read()).unwrap()
+    except (OSError, UnicodeError, ParseError) as e:
         raise ValueError(f"Cannot read configuration file '{config_file}': {e}") from e
 
-    # Legacy path defaults must not be inherited by dataset metadata.
-    config.remove_option(config.default_section, "input_path")
-    config.remove_option(config.default_section, "output_path")
-
-    return config
+    try:
+        return validate_config(config)
+    except ValueError as e:
+        raise ValueError(f"Invalid configuration file '{config_file}': {e}") from e
 
 # Check for conflicting keywords across config sections
 # This helps avoid ambiguity in how files are categorized
 def check_conflicting_keywords(config):
     keyword_map = {}
-    for section in config.sections():
-        if 'keywords' in config[section]:
-            keywords = [k.strip() for k in config.get(section, "keywords").split(',')]
-            for keyword in keywords:
+    for section, values in config.items():
+        if section.startswith(("task_", "run_")):
+            for keyword in values["keywords"]:
                 if keyword in keyword_map:
                     raise ValueError(f"Keyword '{keyword}' found in both '{keyword_map[keyword]}' and '{section}'.")
                 keyword_map[keyword] = section
- 
-def parse_value(value):
-    value = value.strip().strip('"').strip("'")
-
-    if "," in value:
-        return [v.strip() for v in value.split(",") if v.strip()]
-
-    return value
 
 def validate_dataset_type(config):
     """Return the normalized raw dataset type or reject incompatible metadata."""
-    configured_value = config.get("DATASET_DESCRIPTION", "DatasetType", fallback="raw")
-    value = configured_value.strip()
-    if len(value) >= 2 and value[0] == value[-1] and value[0] in ('"', "'"):
-        value = value[1:-1].strip()
-    if value != "raw":
+    metadata = config.get("DATASET_DESCRIPTION", {})
+    if not isinstance(metadata, dict):
+        raise ValueError("[DATASET_DESCRIPTION] must be a TOML table.")
+    configured_value = metadata.get("DatasetType", "raw")
+    if not isinstance(configured_value, str) or configured_value.strip() != "raw":
         raise ValueError(
             f"Invalid DatasetType {configured_value!r} in [DATASET_DESCRIPTION]. "
-            "This converter writes raw EEG BIDS datasets; set DatasetType = raw "
+            'This converter writes raw EEG BIDS datasets; set DatasetType = "raw" '
             "(or omit it)."
         )
-    return value
+    return configured_value.strip()
+
+
+def validate_config(config):
+    """Validate conversion settings before any output is written."""
+    validate_dataset_type(config)
+    metadata = config.get("DATASET_DESCRIPTION", {})
+    try:
+        json.dumps(metadata, allow_nan=False)
+    except (TypeError, ValueError) as e:
+        raise ValueError(
+            f"[DATASET_DESCRIPTION] values must be compatible with JSON: {e}"
+        ) from e
+
+    normalized = dict(config)
+    run_numbers = []
+    for section, values in config.items():
+        if not section.startswith(("task_", "run_")):
+            continue
+        if not isinstance(values, dict):
+            raise ValueError(f"[{section}] must be a TOML table.")
+        keywords = values.get("keywords")
+        if (
+            not isinstance(keywords, list)
+            or not keywords
+            or any(not isinstance(keyword, str) or not keyword.strip() for keyword in keywords)
+        ):
+            raise ValueError(
+                f"[{section}].keywords must be a nonempty TOML array of nonblank strings."
+            )
+        if "description" in values and not isinstance(values["description"], str):
+            raise ValueError(f"[{section}].description must be a string.")
+        normalized[section] = {**values, "keywords": [keyword.strip() for keyword in keywords]}
+
+        if section.startswith("run_"):
+            suffix = section.removeprefix("run_")
+            if not suffix.isascii() or not suffix.isdecimal() or suffix != str(int(suffix)):
+                raise ValueError("Run table names must use run_1, run_2, ...")
+            run_numbers.append(int(suffix))
+
+    if sorted(run_numbers) != list(range(1, len(run_numbers) + 1)):
+        raise ValueError("Run numbers must be consecutive starting from 1.")
+    check_conflicting_keywords(normalized)
+    return normalized
 
 def update_dataset_description(output_path, config):
     """
@@ -88,10 +123,7 @@ def update_dataset_description(output_path, config):
         dataset_description = json.load(f)
 
     # Replace or add keys from the config file
-    if config.has_section("DATASET_DESCRIPTION"):
-        for key, value in config.items("DATASET_DESCRIPTION"):
-            if key != "DatasetType":
-                dataset_description[key] = parse_value(value)
+    dataset_description.update(config.get("DATASET_DESCRIPTION", {}))
     dataset_description["DatasetType"] = dataset_type
         
     with open(dataset_description_path, 'w') as f:
@@ -111,22 +143,17 @@ def validate_input_path(input_path):
 # A JSON sidecar file is created for each run recording the original filename
 def create_bids_structure(input_path, output_path, config):
     validate_input_path(input_path)
-    validate_dataset_type(config)
+    config = validate_config(config)
 
     if os.path.exists(output_path) and not os.path.isdir(output_path):
         raise NotADirectoryError(f"Output path '{output_path}' is not a directory.")
     os.makedirs(output_path, exist_ok=True)
 
-    # Ensure keywords in config are not reused across different sections
-    check_conflicting_keywords(config)
-
     # Map tasks from config
-    tasks = {t: config.get(t, "keywords").split(',') for t in config.sections() if t.startswith("task_")}
+    tasks = {t: values["keywords"] for t, values in config.items() if t.startswith("task_")}
 
     # Map runs from config
-    runs_config = {int(r.split("_")[1]): config.get(r, "keywords").split(',') for r in config.sections() if r.startswith("run_")}
-    if runs_config and sorted(runs_config.keys()) != list(range(1, len(runs_config)+1)):
-        raise ValueError("Run numbers must be consecutive starting from 1.")
+    runs_config = {int(r.split("_")[1]): values["keywords"] for r, values in config.items() if r.startswith("run_")}
 
     # Map subject folders to standardized BIDS IDs
     subject_folders = sorted([f for f in os.listdir(input_path) if os.path.isdir(os.path.join(input_path, f))])
@@ -195,40 +222,40 @@ def create_bids_structure(input_path, output_path, config):
 
                     # Add task description if available
                     task_section = f"task_{task_label}"
-                    if config.has_section(task_section) and config.has_option(task_section, "description"):
-                        metadata["TaskDescription"] = config.get(task_section, "description")
+                    if "description" in config.get(task_section, {}):
+                        metadata["TaskDescription"] = config[task_section]["description"]
 
                     # Add run description if matched_run is not None and a description exists
                     if matched_run:
                         run_section = f"run_{matched_run}"
-                        if config.has_section(run_section) and config.has_option(run_section, "description"):
-                            metadata["RunDescription"] = config.get(run_section, "description")
+                        if "description" in config.get(run_section, {}):
+                            metadata["RunDescription"] = config[run_section]["description"]
 
                     jf.seek(0)
                     json.dump(metadata, jf, indent=4)
                     jf.truncate()
 
-    # Update the description-dataset.jsdon according to the config
+    # Update dataset_description.json using the configured metadata
     update_dataset_description(output_path, config)
 
 # Main entry point to read config and launch processing
 def main(argv=None):
     parser = argparse.ArgumentParser(
         description=(
-            "Convert BioSemi BDF recordings to BIDS using bids_configurator.txt "
+            "Convert BioSemi BDF recordings to BIDS using bids_configurator.toml "
             "in the input directory."
         )
     )
     parser.add_argument(
         "--input", required=True, metavar="DIRECTORY",
-        help="Existing directory containing bids_configurator.txt and subject folders with BDF recordings.",
+        help="Existing directory containing bids_configurator.toml and subject folders with BDF recordings.",
     )
     parser.add_argument(
         "--output", required=True, metavar="DIRECTORY",
         help="BIDS output directory; created if it does not exist.",
     )
     args = parser.parse_args(argv)
-    config_file = os.path.join(args.input, "bids_configurator.txt")
+    config_file = os.path.join(args.input, "bids_configurator.toml")
 
     try:
         validate_input_path(args.input)

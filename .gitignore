@@ -34,5 +34,4 @@ Sortie*
 *.asv
 
 # le fichier de configuration
-bids_configurator.txt
 protocol_README.md
