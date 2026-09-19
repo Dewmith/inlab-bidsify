@@ -15,14 +15,60 @@
 # Authors: A.-Sophie Dubarry
 
 import argparse
+import csv
 import os
 import json
 import sys
+import tempfile
+import warnings
 from datetime import datetime
 from mne_bids import BIDSPath, write_raw_bids
 import mne
 import tomlkit
 from tomlkit.exceptions import ParseError
+
+# Add types here once their MNE and MNE-BIDS mappings are supported and tested.
+EXTERNAL_CHANNEL_TYPES = frozenset({"eog", "ecg", "emg", "gsr", "resp", "misc"})
+
+
+def parse_external_channels(external):
+    """Normalize external-channel tables (or legacy names) without mutating input."""
+    if not isinstance(external, list):
+        raise ValueError("[CHANNELS].external must be a TOML array of tables or channel names.")
+    normalized = []
+    seen_names = set()
+    for index, entry in enumerate(external, 1):
+        field = f"[CHANNELS].external entry {index}"
+        if isinstance(entry, str):
+            entry = {"name": entry}
+        if not isinstance(entry, dict):
+            raise ValueError(f"{field} must be a table or a channel name.")
+        name = entry.get("name")
+        if not isinstance(name, str) or not name.strip():
+            raise ValueError(f"{field}.name is required and must be a nonblank string.")
+        name = name.strip()
+        if name.casefold() in seen_names:
+            raise ValueError(f"{field}: duplicate external channel {name!r}.")
+        seen_names.add(name.casefold())
+
+        channel_type = entry.get("type", "misc")
+        if not isinstance(channel_type, str) or channel_type.strip().lower() not in EXTERNAL_CHANNEL_TYPES:
+            raise ValueError(
+                f"{field}.type {channel_type!r} is not a supported MNE channel type. "
+                f"Choose from: {', '.join(sorted(EXTERNAL_CHANNEL_TYPES))}."
+            )
+        description = entry.get("description")
+        if description is not None:
+            if not isinstance(description, str):
+                raise ValueError(f"{field}.description must be a string.")
+            description = description if description.strip() else None
+            # MNE-BIDS reads TSV fields without CSV quoting, so embedded field
+            # or row separators cannot be represented safely.
+            if description and any(character in description for character in "\t\r\n"):
+                raise ValueError(f"{field}.description must be a single line without tabs.")
+        normalized.append({"name": name, "type": channel_type.strip().lower(), "description": description})
+    return normalized
+
 
 # Read conversion rules and metadata from the configuration file
 def read_config(config_file):
@@ -66,6 +112,25 @@ def validate_dataset_type(config):
     return configured_value.strip()
 
 
+def validate_channel_config(config):
+    """Require a known electrode layout and an optional external-channel list."""
+    channels = config.get("CHANNELS")
+    if not isinstance(channels, dict):
+        raise ValueError("[CHANNELS] is required and must be a TOML table.")
+    montage = channels.get("montage")
+    if not isinstance(montage, str) or not montage.strip():
+        raise ValueError("[CHANNELS].montage must name an MNE built-in montage.")
+    montage = montage.strip()
+    if montage not in mne.channels.get_builtin_montages():
+        raise ValueError(
+            f"Unknown [CHANNELS].montage {montage!r}. Choose an MNE built-in "
+            "montage matching the recording's electrode layout; list available "
+            "names with mne.channels.get_builtin_montages()."
+        )
+    external = parse_external_channels(channels.get("external", []))
+    return {**channels, "montage": montage, "external": external}
+
+
 def validate_config(config):
     """Validate conversion settings before any output is written."""
     validate_dataset_type(config)
@@ -106,7 +171,115 @@ def validate_config(config):
     if sorted(run_numbers) != list(range(1, len(run_numbers) + 1)):
         raise ValueError("Run numbers must be consecutive starting from 1.")
     check_conflicting_keywords(normalized)
+    normalized["CHANNELS"] = validate_channel_config(config)
     return normalized
+
+
+def classify_channels(raw, montage, external, recording_name):
+    """Set signal types using an electrode-name reference, preserving triggers."""
+    external = parse_external_channels(external)
+    eeg_names = {name.strip().casefold() for name in montage.ch_names}
+    external_by_name = {channel["name"].casefold(): channel for channel in external}
+    recorded_names = {name.strip().casefold() for name in raw.ch_names}
+    channel_types = {}
+    automatic_misc = []
+    trigger_conflicts = []
+
+    for name, current_type in zip(raw.ch_names, raw.get_channel_types()):
+        normalized_name = name.strip().casefold()
+        if current_type == "stim":
+            if normalized_name in external_by_name:
+                trigger_conflicts.append(name)
+            continue
+        if normalized_name in external_by_name:
+            channel_types[name] = external_by_name[normalized_name]["type"]
+        elif normalized_name in eeg_names:
+            channel_types[name] = "eeg"
+        else:
+            channel_types[name] = "misc"
+            automatic_misc.append(name)
+
+    if "eeg" not in channel_types.values():
+        raise ValueError(
+            f"Recording {recording_name!r} has no EEG channels after classification. "
+            "Check [CHANNELS].montage against the recording's channel names and "
+            "check that [CHANNELS].external does not exclude all EEG channels."
+        )
+
+    # MISC and some sensor types have different MNE units. Only metadata changes; the BDF's
+    # original units remain available to MNE-BIDS and samples are not modified.
+    raw.set_channel_types(channel_types, on_unit_change="ignore")
+
+    messages = []
+    if automatic_misc:
+        messages.append(
+            "Channels absent from the configured montage were automatically set "
+            f"to MISC: {', '.join(automatic_misc)}."
+        )
+    absent_external = [
+        channel["name"] for name, channel in external_by_name.items()
+        if name not in recorded_names
+    ]
+    if absent_external:
+        messages.append(
+            f"Configured external channels are absent: {', '.join(absent_external)}."
+        )
+    if trigger_conflicts:
+        messages.append(
+            "Channels listed as external are recognized triggers and were kept "
+            f"as TRIG: {', '.join(trigger_conflicts)}."
+        )
+    if messages:
+        warnings.warn(
+            f"Recording {recording_name!r}: {' '.join(messages)}",
+            UserWarning,
+            stacklevel=2,
+        )
+
+
+def update_channel_descriptions(bids_path, external):
+    """Replace only explicitly configured descriptions in MNE-BIDS' channels TSV."""
+    descriptions = {
+        channel["name"].casefold(): channel["description"]
+        for channel in parse_external_channels(external) if channel["description"] is not None
+    }
+    if not descriptions:
+        return
+
+    channels_path = bids_path.copy().update(suffix="channels", extension=".tsv").fpath
+    with open(channels_path, encoding="utf-8-sig", newline="") as stream:
+        # Keep every value as text, including units, n/a, and numeric formatting.
+        rows = list(csv.reader(stream, delimiter="\t", quoting=csv.QUOTE_NONE))
+    if not rows or "name" not in rows[0] or "description" not in rows[0]:
+        raise ValueError(f"Channels TSV {str(channels_path)!r} must contain name and description columns.")
+    header = rows[0]
+    if len(set(header)) != len(header) or any(len(row) != len(header) for row in rows[1:]):
+        raise ValueError(f"Channels TSV {str(channels_path)!r} has malformed columns or rows.")
+    name_index, description_index = header.index("name"), header.index("description")
+    changed = False
+    for row in rows[1:]:
+        description = descriptions.get(row[name_index].strip().casefold())
+        if description is not None and row[description_index] != description:
+            row[description_index] = description
+            changed = True
+    if not changed:
+        return
+
+    # Replace atomically so a failed write leaves the generated sidecar intact.
+    temporary_path = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w", encoding="utf-8-sig", newline="", dir=channels_path.parent,
+            suffix=".tmp", delete=False,
+        ) as stream:
+            temporary_path = stream.name
+            writer = csv.writer(stream, delimiter="\t", quoting=csv.QUOTE_NONE, quotechar=None, lineterminator="\n")
+            writer.writerows(rows)
+        os.replace(temporary_path, channels_path)
+    finally:
+        if temporary_path is not None and os.path.exists(temporary_path):
+            os.unlink(temporary_path)
+
 
 def update_dataset_description(output_path, config):
     """
@@ -144,6 +317,7 @@ def validate_input_path(input_path):
 def create_bids_structure(input_path, output_path, config):
     validate_input_path(input_path)
     config = validate_config(config)
+    montage = mne.channels.make_standard_montage(config["CHANNELS"]["montage"])
 
     if os.path.exists(output_path) and not os.path.isdir(output_path):
         raise NotADirectoryError(f"Output path '{output_path}' is not a directory.")
@@ -197,8 +371,10 @@ def create_bids_structure(input_path, output_path, config):
                 run_label = f"{matched_run:02}" if matched_run else f"{run_counter:02}"
                 run_counter += 1 if not matched_run else 0
 
-                # Read raw BDF file with preload
-                raw = mne.io.read_raw_bdf(os.path.join(subject_path, bdf), preload=False)
+                # Read channel metadata without preloading recording samples.
+                recording_path = os.path.join(subject_path, bdf)
+                raw = mne.io.read_raw_bdf(recording_path, preload=False)
+                classify_channels(raw, montage, config["CHANNELS"]["external"], recording_path)
 
                 # Create BIDS path with session, task, and run
                 bids_path = BIDSPath(
@@ -213,6 +389,7 @@ def create_bids_structure(input_path, output_path, config):
 
                 # Write data to BIDS format
                 write_raw_bids(raw, bids_path, overwrite=True)
+                update_channel_descriptions(bids_path, config["CHANNELS"]["external"])
 
                 # Save original BDF filename and task/run descriptions to JSON sidecar
                 json_path = bids_path.copy().update(extension='.json').fpath

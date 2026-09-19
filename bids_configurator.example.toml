@@ -26,6 +26,28 @@ ManufacturersModelName = "ActiveTwo"
 
 SubjectArtefactDescription = "n/a"
 
+# --- Channel classification --- Required for every dataset.
+[CHANNELS]
+# Example only: choose the MNE built-in montage matching your actual electrode
+# layout AND channel names. There is no default montage.
+montage = "biosemi64"
+# Optional known external channels. Each table requires a name; type defaults to
+# "misc". Supported types (case-insensitive): eog, ecg, emg, gsr, resp, misc.
+# Omit description to keep MNE-BIDS' normal description for the selected type.
+# Recognized Status/trigger channels always retain their trigger type.
+
+[[CHANNELS.external]]
+name = "VEOG"
+type = "eog"
+description = "Vertical electrooculogram"
+
+[[CHANNELS.external]]
+name = "EXG6"
+description = "External channel placed behind ear"
+
+[[CHANNELS.external]]
+name = "EXG7"
+
 # --- Tasks --- WARNING : prevent using special characters in task names (Unallowed `-`, `_`, or `/` )
 [task_NbackRolling]
 description = "N-back task with rolling strategy"

@@ -5,6 +5,7 @@ This Python script converts EEG recordings in **BioSemi BDF format** into a **BI
 It reads `bids_configurator.toml` from the input dataset directory. This TOML file controls:
 
 - Task and run labeling based on keywords found in filenames
+- Required montage and optional external-channel types and descriptions
 - Optional metadata descriptions
 
 Input and output directories are supplied as command-line arguments.
@@ -70,7 +71,7 @@ uv pip install -r requirements.txt
 ## 🚀 Usage
 
 1. Place your `.bdf` EEG files in subject-specific folders inside your input directory.
-2. Copy `bids_configurator.example.toml` from this repository into your input directory, rename it to `bids_configurator.toml`, and customize its rules and metadata for your dataset (see example below).
+2. Copy `bids_configurator.example.toml` from this repository into your input directory, rename it to `bids_configurator.toml`, and set `[CHANNELS].montage` to your actual electrode layout. Customize the external-channel list, rules, and metadata for your dataset (see example below).
 3. Run the conversion script:
 
 Activate the virtual environment if it is not activated (see above) and execute:
@@ -126,6 +127,22 @@ raw_data/
 ## 📝 Example `bids_configurator.toml`
 
 ```toml
+[CHANNELS]
+# Example only: use the montage matching your recording's layout and names.
+montage = "biosemi64"
+
+[[CHANNELS.external]]
+name = "VEOG"
+type = "eog"
+description = "Vertical electrooculogram"
+
+[[CHANNELS.external]]
+name = "EXG6"
+description = "External channel placed behind ear"
+
+[[CHANNELS.external]]
+name = "EXG7"
+
 [task_restingtask]
 keywords = ["rest", "baseline"]
 description = "Participants rest with eyes closed."
@@ -170,9 +187,37 @@ is ignored. If the field or table is omitted, the output defaults to
 `"derivative"` or `"study"`) stops conversion with a nonzero exit status before any
 recording is read or output is created or changed.
 
+## Channel classification
+
+- **Montage:** `[CHANNELS].montage` is required and must match your electrode layout
+  and channel names; `biosemi64` is only an example.
+- **External channels:** optional; use one `[[CHANNELS.external]]` table per channel
+  with a required `name`. Supported types: `eog`, `ecg`, `emg`, `gsr`, `resp`, `misc`.
+  Omitting `type` defaults to `misc`.
+- **Descriptions:** optional, single-line text without tabs. Omitted or blank values
+  keep the MNE-BIDS default, such as `Miscellaneous` for `MISC`.
+- **Classification:** triggers keep `TRIG`; external channels use their configured
+  type; remaining montage matches become `EEG`, and other channels become `MISC`
+  with a warning. Missing external channels produce a warning; conversion stops
+  if no EEG channels remain.
+
+With the example above, `*_channels.tsv` could contain these rows:
+
+```tsv
+name	type	units	low_cutoff	high_cutoff	description	sampling_frequency	status	status_description
+VEOG	EOG	µV	0.0	104.0	Vertical electrooculogram	512.0	good	n/a
+EXG6	MISC	µV	0.0	104.0	External channel placed behind ear	512.0	good	n/a
+EXG7	MISC	µV	0.0	104.0	Miscellaneous	512.0	good	n/a
+```
+
+Other values shown depend on the recording. Channel metadata is saved in BIDS
+sidecars; the BDF remains unchanged. Read the output with `mne_bids.read_raw_bids()`
+to apply this metadata.
+
 ## ⚙️ Features
 
 * Automatically builds a BIDS-compliant folder structure
+* Classifies EEG and external channels using a configured montage while preserving triggers
 * Detects **sessions** based on `.bdf` file creation date
 * Task and run names are extracted from the TOML table names:
   e.g. `[task_restingtask]` → one task `restingtask` in filenames and BIDS paths
@@ -188,6 +233,8 @@ recording is read or output is created or changed.
 * For each recording:
 
   * Raw data is copied to `sub-XX/ses-YY/eeg/`
+  * `*_channels.tsv` contains corrected channel types and any custom external-channel descriptions
+  * `*_eeg.json` includes channel counts based on the corrected types
   * JSON Sidecar files are created `*_eeg.json` including:
 
     * `"OriginalFilename"` — the original `.bdf` filename
@@ -201,17 +248,6 @@ recording is read or output is created or changed.
 * The script will only update `dataset_description.json` if it already exists — it will not create one from scratch.
 * Only `.bdf` files are supported.
 
-
-## 🧪 Tests
-
-Run the configuration and conversion-flow tests with:
-
-```bash
-python -m unittest discover -s tests -v
-```
-
-The tests use `tomlkit` and mock MNE recording I/O, so no recordings or MNE installation
-are needed to run them.
 
 ## 📄 License
 
