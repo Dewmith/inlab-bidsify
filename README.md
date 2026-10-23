@@ -5,7 +5,7 @@ This Python script converts EEG recordings in **BioSemi BDF format** into a **BI
 It reads `bids_configurator.toml` from the input dataset directory. This TOML file controls:
 
 - Task and run labeling based on keywords found in filenames
-- Required montage and optional external-channel types and descriptions
+- Optional montage and external-channel types and descriptions
 - Optional metadata descriptions
 
 Input and output directories are supplied as command-line arguments.
@@ -71,7 +71,7 @@ uv pip install -r requirements.txt
 ## 🚀 Usage
 
 1. Place your `.bdf` EEG files in subject-specific folders inside your input directory.
-2. Copy `bids_configurator.example.toml` from this repository into your input directory, rename it to `bids_configurator.toml`, and set `[CHANNELS].montage` to your actual electrode layout. Customize the external-channel list, rules, and metadata for your dataset (see example below).
+2. Copy `bids_configurator.example.toml` from this repository into your input directory, rename it to `bids_configurator.toml`, and optionally set `[CHANNELS].montage` to your actual electrode layout. Omit or comment out `montage` to keep channel types as read from the BDF file, except configured external-channel overrides. Customize the external-channel list, rules, and metadata for your dataset (see example below).
 3. Run the conversion script:
 
 Activate the virtual environment if it is not activated (see above) and execute:
@@ -96,6 +96,10 @@ Relative paths are resolved from the current working directory.
 
 Run `python bidsify.py --help` for usage information. Missing arguments or configuration,
 invalid paths, and conversion failures result in a nonzero exit status.
+Subject folders without directly contained `.bdf` files produce a warning and are
+skipped. If no recordings are found, the script reports an error explaining the
+expected input layout and exits without creating or changing output. Point
+`--input` at the dataset directory itself, rather than its parent directory.
 
 Configuration files must use the `.toml` extension and valid TOML syntax.
 Configuration is validated before recordings are read or output is created or changed.
@@ -120,6 +124,10 @@ raw_data/
 
 - Each folder directly inside `raw_data` represents one participant. Folder names are sorted and assigned BIDS IDs: `participant_001` becomes `sub-01`, and `participant_002` becomes `sub-02` in this example.
 - Place `.bdf` files directly inside each participant folder; nested folders are not scanned.
+- Empty or nested-only participant folders are skipped with a warning. Their IDs
+  remain reserved, so skipping a folder can leave gaps in the output subject IDs.
+- Extensions are matched case-insensitively; `._` files and directories named
+  with a `.bdf` extension are ignored.
 - The configuration file at the dataset root is not treated as a participant or recording.
 - With the configuration below, filenames containing `rest` map to task `restingtask`, and filenames containing `stim` map to task `stimtask`.
 - `block1` and `block2` map to `run-01` and `run-02`, respectively. Filename keyword matching is case-sensitive.
@@ -128,7 +136,8 @@ raw_data/
 
 ```toml
 [CHANNELS]
-# Example only: use the montage matching your recording's layout and names.
+# Optional example: use the montage matching your recording's layout and names.
+# Omit or comment out montage to preserve BDF-read types except external overrides.
 montage = "biosemi64"
 
 [[CHANNELS.external]]
@@ -189,17 +198,30 @@ recording is read or output is created or changed.
 
 ## Channel classification
 
-- **Montage:** `[CHANNELS].montage` is required and must match your electrode layout
-  and channel names; `biosemi64` is only an example.
+- **Montage:** `[CHANNELS].montage` is optional; `biosemi64` is only an example.
+  Choose an MNE built-in montage matching your electrode layout and channel names.
+  Omit `[CHANNELS]` entirely if neither a montage nor external channels is needed.
 - **External channels:** optional; use one `[[CHANNELS.external]]` table per channel
   with a required `name`. Supported types: `eog`, `ecg`, `emg`, `gsr`, `resp`, `misc`.
   Omitting `type` defaults to `misc`.
 - **Descriptions:** optional, single-line text without tabs. Omitted or blank values
   keep the MNE-BIDS default, such as `Miscellaneous` for `MISC`.
-- **Classification:** triggers keep `TRIG`; external channels use their configured
+- **Classification with a matching montage:** triggers keep `TRIG`; external channels use their configured
   type; remaining montage matches become `EEG`, and other channels become `MISC`
-  with a warning. Missing external channels produce a warning; conversion stops
-  if no EEG channels remain.
+  with a warning. Conversion still stops if external-channel settings override
+  every matched EEG channel.
+- **Fallback:** missing or blank montage produces the warning "No montage configured:
+  channel types are kept as read from the BDF file." An unknown montage name warns
+  with all valid names, then uses the same fallback. If a recording has no
+  non-trigger channel matching the montage, a warning identifies that recording
+  and uses fallback for it; other recordings can still use the configured montage.
+  Fallback skips automatic EEG/MISC classification and retains the BDF-read types,
+  while applying configured external types and descriptions and preserving triggers.
+  Missing external channels continue to produce a warning.
+
+Invalid TOML, non-string montage values, malformed channel settings, duplicate
+keywords, and non-consecutive runs remain errors. Actual read/write failures also
+result in a nonzero exit status.
 
 With the example above, `*_channels.tsv` could contain these rows:
 
@@ -217,7 +239,7 @@ to apply this metadata.
 ## ⚙️ Features
 
 * Automatically builds a BIDS-compliant folder structure
-* Classifies EEG and external channels using a configured montage while preserving triggers
+* Optionally classifies EEG channels using a configured montage; applies external-channel settings while preserving triggers
 * Detects **sessions** based on `.bdf` file creation date
 * Task and run names are extracted from the TOML table names:
   e.g. `[task_restingtask]` → one task `restingtask` in filenames and BIDS paths
@@ -229,7 +251,8 @@ to apply this metadata.
 
 * BIDS-compliant dataset
 * `dataset_description.json` (updated with user metadata)
-* `participants.tsv` lists each participant and their original folder name
+* `participants.tsv` adds subjects with successfully converted recordings and
+  their original folder names, preserving MNE-BIDS columns and existing participants
 * For each recording:
 
   * Raw data is copied to `sub-XX/ses-YY/eeg/`

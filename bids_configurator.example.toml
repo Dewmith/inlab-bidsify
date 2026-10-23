@@ -26,10 +26,14 @@ ManufacturersModelName = "ActiveTwo"
 
 SubjectArtefactDescription = "n/a"
 
-# --- Channel classification --- Required for every dataset.
+# --- Channel classification --- Optional.
+# Omit the whole CHANNELS section if neither montage nor external channels is needed.
 [CHANNELS]
 # Example only: choose the MNE built-in montage matching your actual electrode
-# layout AND channel names. There is no default montage.
+# layout AND channel names. There is no default montage. Omit or comment out
+# montage (or set it to a blank string) to preserve BDF-read channel types,
+# except configured external-channel overrides. Missing, unknown, or unmatched
+# montage settings warn and use this fallback; unknown names list valid montages.
 montage = "biosemi64"
 # Optional known external channels. Each table requires a name; type defaults to
 # "misc". Supported types (case-insensitive): eog, ecg, emg, gsr, resp, misc.

@@ -113,22 +113,38 @@ def validate_dataset_type(config):
 
 
 def validate_channel_config(config):
-    """Require a known electrode layout and an optional external-channel list."""
-    channels = config.get("CHANNELS")
+    """Normalize optional montage and external-channel settings without warnings."""
+    channels = config.get("CHANNELS", {})
     if not isinstance(channels, dict):
-        raise ValueError("[CHANNELS] is required and must be a TOML table.")
-    montage = channels.get("montage")
-    if not isinstance(montage, str) or not montage.strip():
-        raise ValueError("[CHANNELS].montage must name an MNE built-in montage.")
-    montage = montage.strip()
-    if montage not in mne.channels.get_builtin_montages():
-        raise ValueError(
-            f"Unknown [CHANNELS].montage {montage!r}. Choose an MNE built-in "
-            "montage matching the recording's electrode layout; list available "
-            "names with mne.channels.get_builtin_montages()."
-        )
+        raise ValueError("[CHANNELS] must be a TOML table.")
+    montage = channels.get("montage", "")
+    if not isinstance(montage, str):
+        raise ValueError("[CHANNELS].montage must be a string naming an MNE built-in montage.")
     external = parse_external_channels(channels.get("external", []))
-    return {**channels, "montage": montage, "external": external}
+    normalized = {**channels, "external": external}
+    if montage.strip():
+        normalized["montage"] = montage.strip()
+    else:
+        normalized.pop("montage", None)
+    return normalized
+
+
+def resolve_montage(montage_name):
+    """Resolve the optional electrode reference once, warning on fallback."""
+    fallback_message = "No montage configured: channel types are kept as read from the BDF file."
+    if montage_name is None:
+        warnings.warn(fallback_message, UserWarning, stacklevel=2)
+        return None
+    valid_names = mne.channels.get_builtin_montages()
+    if montage_name not in valid_names:
+        warnings.warn(
+            f"Unknown [CHANNELS].montage {montage_name!r}. "
+            f"Valid montage names: {', '.join(sorted(valid_names))}. {fallback_message}",
+            UserWarning,
+            stacklevel=2,
+        )
+        return None
+    return mne.channels.make_standard_montage(montage_name)
 
 
 def validate_config(config):
@@ -176,16 +192,28 @@ def validate_config(config):
 
 
 def classify_channels(raw, montage, external, recording_name):
-    """Set signal types using an electrode-name reference, preserving triggers."""
+    """Apply external types and an optional electrode reference, preserving triggers."""
     external = parse_external_channels(external)
-    eeg_names = {name.strip().casefold() for name in montage.ch_names}
+    eeg_names = {name.strip().casefold() for name in montage.ch_names} if montage is not None else set()
     external_by_name = {channel["name"].casefold(): channel for channel in external}
     recorded_names = {name.strip().casefold() for name in raw.ch_names}
+    current_types = raw.get_channel_types()
+    use_montage = montage is not None
+    messages = []
+    if use_montage and not any(
+        name.strip().casefold() in eeg_names and channel_type != "stim"
+        for name, channel_type in zip(raw.ch_names, current_types)
+    ):
+        messages.append(
+            "No recorded non-trigger channel matches the configured montage. "
+            "Channel types are kept as read from the BDF file."
+        )
+        use_montage = False
     channel_types = {}
     automatic_misc = []
     trigger_conflicts = []
 
-    for name, current_type in zip(raw.ch_names, raw.get_channel_types()):
+    for name, current_type in zip(raw.ch_names, current_types):
         normalized_name = name.strip().casefold()
         if current_type == "stim":
             if normalized_name in external_by_name:
@@ -193,13 +221,13 @@ def classify_channels(raw, montage, external, recording_name):
             continue
         if normalized_name in external_by_name:
             channel_types[name] = external_by_name[normalized_name]["type"]
-        elif normalized_name in eeg_names:
+        elif use_montage and normalized_name in eeg_names:
             channel_types[name] = "eeg"
-        else:
+        elif use_montage:
             channel_types[name] = "misc"
             automatic_misc.append(name)
 
-    if "eeg" not in channel_types.values():
+    if use_montage and "eeg" not in channel_types.values():
         raise ValueError(
             f"Recording {recording_name!r} has no EEG channels after classification. "
             "Check [CHANNELS].montage against the recording's channel names and "
@@ -208,9 +236,9 @@ def classify_channels(raw, montage, external, recording_name):
 
     # MISC and some sensor types have different MNE units. Only metadata changes; the BDF's
     # original units remain available to MNE-BIDS and samples are not modified.
-    raw.set_channel_types(channel_types, on_unit_change="ignore")
+    if channel_types:
+        raw.set_channel_types(channel_types, on_unit_change="ignore")
 
-    messages = []
     if automatic_misc:
         messages.append(
             "Channels absent from the configured montage were automatically set "
@@ -265,20 +293,47 @@ def update_channel_descriptions(bids_path, external):
     if not changed:
         return
 
+    replace_tsv_rows(channels_path, rows)
+
+
+def replace_tsv_rows(path, rows):
+    """Write TSV rows atomically while retaining unquoted textual values."""
     # Replace atomically so a failed write leaves the generated sidecar intact.
     temporary_path = None
     try:
         with tempfile.NamedTemporaryFile(
-            mode="w", encoding="utf-8-sig", newline="", dir=channels_path.parent,
+            mode="w", encoding="utf-8-sig", newline="", dir=os.path.dirname(path),
             suffix=".tmp", delete=False,
         ) as stream:
             temporary_path = stream.name
             writer = csv.writer(stream, delimiter="\t", quoting=csv.QUOTE_NONE, quotechar=None, lineterminator="\n")
             writer.writerows(rows)
-        os.replace(temporary_path, channels_path)
+        os.replace(temporary_path, path)
     finally:
         if temporary_path is not None and os.path.exists(temporary_path):
             os.unlink(temporary_path)
+
+
+def update_participant_folder(output_path, sub_id, original_folder):
+    """Add a converted subject's original folder, preserving participant metadata."""
+    participants_path = os.path.join(output_path, "participants.tsv")
+    with open(participants_path, encoding="utf-8-sig", newline="") as stream:
+        rows = list(csv.reader(stream, delimiter="\t", quoting=csv.QUOTE_NONE))
+    if not rows or "participant_id" not in rows[0]:
+        raise ValueError(f"Participants TSV {participants_path!r} must contain participant_id.")
+    header = rows[0]
+    if len(set(header)) != len(header) or any(len(row) != len(header) for row in rows[1:]):
+        raise ValueError(f"Participants TSV {participants_path!r} has malformed columns or rows.")
+    participant_index = header.index("participant_id")
+    matching_rows = [row for row in rows[1:] if row[participant_index] == f"sub-{sub_id}"]
+    if len(matching_rows) != 1:
+        raise ValueError(f"Participants TSV {participants_path!r} must contain one row for sub-{sub_id}.")
+    if "original_folder" not in header:
+        header.append("original_folder")
+        for row in rows[1:]:
+            row.append("n/a")
+    matching_rows[0][header.index("original_folder")] = original_folder
+    replace_tsv_rows(participants_path, rows)
 
 
 def update_dataset_description(output_path, config):
@@ -317,10 +372,37 @@ def validate_input_path(input_path):
 def create_bids_structure(input_path, output_path, config):
     validate_input_path(input_path)
     config = validate_config(config)
-    montage = mne.channels.make_standard_montage(config["CHANNELS"]["montage"])
 
     if os.path.exists(output_path) and not os.path.isdir(output_path):
         raise NotADirectoryError(f"Output path '{output_path}' is not a directory.")
+
+    # Assign IDs before skipping folders so other subjects retain their IDs.
+    subject_folders = sorted([f for f in os.listdir(input_path) if os.path.isdir(os.path.join(input_path, f))])
+    subject_map = {folder: f"{i+1:02}" for i, folder in enumerate(subject_folders)}
+    subject_recordings = {}
+    for original_folder in subject_map:
+        subject_path = os.path.join(input_path, original_folder)
+        bdf_files = [
+            f for f in os.listdir(subject_path)
+            if f.lower().endswith(".bdf") and not f.startswith("._")
+            and os.path.isfile(os.path.join(subject_path, f))
+        ]
+        if bdf_files:
+            subject_recordings[original_folder] = bdf_files
+        else:
+            warnings.warn(
+                f"No .bdf files found in {subject_path!r} — skipped.",
+                UserWarning,
+                stacklevel=2,
+            )
+    if not subject_recordings:
+        raise ValueError(
+            f"No recordings were converted: no .bdf files found directly inside subject folders under {os.fspath(input_path)!r}. "
+            "Check that --input points to the dataset directory containing bids_configurator.toml "
+            "and subject folders with BDF files; nested folders are not scanned."
+        )
+
+    montage = resolve_montage(config["CHANNELS"].get("montage"))
     os.makedirs(output_path, exist_ok=True)
 
     # Map tasks from config
@@ -329,21 +411,12 @@ def create_bids_structure(input_path, output_path, config):
     # Map runs from config
     runs_config = {int(r.split("_")[1]): values["keywords"] for r, values in config.items() if r.startswith("run_")}
 
-    # Map subject folders to standardized BIDS IDs
-    subject_folders = sorted([f for f in os.listdir(input_path) if os.path.isdir(os.path.join(input_path, f))])
-    subject_map = {folder: f"{i+1:02}" for i, folder in enumerate(subject_folders)}
-
-    # Write participants.tsv file for subject metadata
-    participants_file = os.path.join(output_path, "participants.tsv")
-    with open(participants_file, 'w') as pf:
-        pf.write("participant_id\toriginal_folder\n")
-        for original, sub_id in subject_map.items():
-            pf.write(f"sub-{sub_id}\t{original}\n")
-
     # Process each subject folder
-    for original_folder, sub_id in subject_map.items():
+    converted_recordings = 0
+    for original_folder, bdf_files in subject_recordings.items():
+        sub_id = subject_map[original_folder]
         subject_path = os.path.join(input_path, original_folder)
-        bdf_files = [f for f in os.listdir(subject_path) if f.lower().endswith(".bdf") and not f.startswith("._")]
+        participant_recorded = False
         
         # Group BDF files by file creation date (one session per day)
         date_grouped = {}
@@ -411,6 +484,14 @@ def create_bids_structure(input_path, output_path, config):
                     jf.seek(0)
                     json.dump(metadata, jf, indent=4)
                     jf.truncate()
+
+                if not participant_recorded:
+                    update_participant_folder(output_path, sub_id, original_folder)
+                    participant_recorded = True
+                converted_recordings += 1
+
+    if not converted_recordings:
+        raise ValueError("No recordings were converted.")
 
     # Update dataset_description.json using the configured metadata
     update_dataset_description(output_path, config)
